@@ -1,0 +1,176 @@
+@import "tailwindcss";
+
+:root {
+  /* Core Brand Tokens (Green Harmony Palette) */
+  --color-primary-dark: #1B5E20;     /* Deep Forest Green */
+  --color-primary: #2E7D32;          /* Accessible Primary Green for text/buttons */
+  --color-primary-light: #66BB6A;    /* Medium Emerald Accent */
+  --color-primary-soft: #A5D6A7;     /* Soft Sage Accent */
+  --color-bg-canvas: #E8F5E9;        /* Mint Canvas Background */
+  --color-surface: #FFFFFF;          /* Pure White Card Surface */
+  --color-surface-hover: #F4F9F5;
+
+  /* Neutrals & Typography */
+  --color-text-main: #122415;        /* 14.2:1 Contrast Ratio (AAA) */
+  --color-text-muted: #38523C;
+  --color-text-light: #607964;
+  --color-border: #C8E6C9;
+  --color-border-subtle: #E0F2E1;
+
+  /* Clinical Data Status Tokens */
+  --status-verified-text: #1B5E20;
+  --status-verified-bg: #E8F5E9;
+  --status-verified-border: #A5D6A7;
+
+  --status-pending-text: #B45309;
+  --status-pending-bg: #FEF3C7;
+  --status-pending-border: #FDE68A;
+
+  --status-imported-text: #1D4ED8;
+  --status-imported-bg: #EFF6FF;
+  --status-imported-border: #BFDBFE;
+
+  --status-critical-text: #B91C1C;
+  --status-critical-bg: #FEE2E2;
+  --status-critical-border: #FCA5A5;
+
+  --status-resolved-text: #475569;
+  --status-resolved-bg: #F1F5F9;
+  --status-resolved-border: #CBD5E1;
+
+  /* Fonts & Shadows */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Outfit', 'Inter', sans-serif;
+  --shadow-sm: 0 1px 3px rgba(27, 94, 32, 0.05);
+  --shadow-md: 0 4px 12px rgba(27, 94, 32, 0.08);
+  --shadow-lg: 0 8px 24px rgba(27, 94, 32, 0.12);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-full: 9999px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-bg-canvas);
+  color: var(--color-text-main);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+/* Glassmorphism & Cards */
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 1.5rem;
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-border);
+}
+
+.card-accent {
+  border-top: 4px solid var(--color-primary-dark);
+}
+
+/* Status Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.badge-verified {
+  color: var(--status-verified-text);
+  background: var(--status-verified-bg);
+  border-color: var(--status-verified-border);
+}
+
+.badge-pending {
+  color: var(--status-pending-text);
+  background: var(--status-pending-bg);
+  border-color: var(--status-pending-border);
+}
+
+.badge-imported {
+  color: var(--status-imported-text);
+  background: var(--status-imported-bg);
+  border-color: var(--status-imported-border);
+}
+
+.badge-critical {
+  color: var(--status-critical-text);
+  background: var(--status-critical-bg);
+  border-color: var(--status-critical-border);
+}
+
+.badge-resolved {
+  color: var(--status-resolved-text);
+  background: var(--status-resolved-bg);
+  border-color: var(--status-resolved-border);
+}
+
+/* Button System */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.btn-primary {
+  background-color: var(--color-primary-dark);
+  color: #FFFFFF;
+}
+
+.btn-primary:hover {
+  background-color: #144517;
+  box-shadow: 0 4px 12px rgba(27, 94, 32, 0.25);
+}
+
+.btn-secondary {
+  background-color: var(--color-surface);
+  color: var(--color-primary-dark);
+  border-color: var(--color-border);
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-bg-canvas);
+  border-color: var(--color-primary-dark);
+}
+
+/* Scrollbar Hide Utility */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
