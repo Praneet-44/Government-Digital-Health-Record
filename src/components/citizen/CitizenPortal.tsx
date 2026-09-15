@@ -11,19 +11,19 @@ import { AIHistoryIntakeModal } from './AIHistoryIntakeModal';
 import { LayoutDashboard, User, AlertOctagon, Pill, Activity, FileText, Calendar, Lock, PlusCircle, Bot } from 'lucide-react';
 
 export const CitizenPortal: React.FC = () => {
-  const { activeTab, setActiveTab, patient } = useHealthRecord();
+  const { activeTab, setActiveTab, patient, t } = useHealthRecord();
   const [showReportModal, setShowReportModal] = useState(false);
   const [showAIModal, setShowAIModal] = useState(false);
 
   const tabs = [
-    { id: 'dashboard', label: 'Overview', icon: <LayoutDashboard className="w-4 h-4" /> },
-    { id: 'profile', label: 'Health Profile', icon: <User className="w-4 h-4" /> },
-    { id: 'allergies', label: 'Allergies', icon: <AlertOctagon className="w-4 h-4" /> },
-    { id: 'medications', label: 'Medications', icon: <Pill className="w-4 h-4" /> },
+    { id: 'dashboard', label: t('overviewTab'), icon: <LayoutDashboard className="w-4 h-4" /> },
+    { id: 'profile', label: t('citizenRecordOverview'), icon: <User className="w-4 h-4" /> },
+    { id: 'allergies', label: t('allergiesTab'), icon: <AlertOctagon className="w-4 h-4" /> },
+    { id: 'medications', label: t('medicationsTab'), icon: <Pill className="w-4 h-4" /> },
     { id: 'operations', label: 'Surgeries', icon: <Activity className="w-4 h-4" /> },
-    { id: 'documents', label: 'Documents', icon: <FileText className="w-4 h-4" /> },
-    { id: 'timeline', label: 'Timeline', icon: <Calendar className="w-4 h-4" /> },
-    { id: 'consent', label: 'Consent & Access', icon: <Lock className="w-4 h-4" /> }
+    { id: 'documents', label: t('documentsTab'), icon: <FileText className="w-4 h-4" /> },
+    { id: 'timeline', label: t('timelineTab'), icon: <Calendar className="w-4 h-4" /> },
+    { id: 'consent', label: t('consentTab'), icon: <Lock className="w-4 h-4" /> }
   ];
 
   return (

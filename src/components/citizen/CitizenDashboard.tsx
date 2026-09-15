@@ -13,7 +13,7 @@ export const CitizenDashboard: React.FC<CitizenDashboardProps> = ({
   onOpenReportModal,
   onOpenAIIntake
 }) => {
-  const { patient } = useHealthRecord();
+  const { patient, t } = useHealthRecord();
 
   const criticalAllergies = patient.allergies.filter(a => a.severity === 'critical');
   const activeMeds = patient.medications.filter(m => m.status === 'active');
@@ -25,9 +25,9 @@ export const CitizenDashboard: React.FC<CitizenDashboardProps> = ({
       <div className="bg-gradient-to-r from-[#1B5E20] to-[#2E7D32] text-white rounded-2xl p-6 shadow-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold text-[#A5D6A7] uppercase tracking-wider mb-1">
-            <ShieldCheck className="w-4 h-4 text-[#66BB6A]" /> Verified Permanent Digital Health Record
+            <ShieldCheck className="w-4 h-4 text-[#66BB6A]" /> {t('govNetwork')}
           </div>
-          <h2 className="text-2xl font-bold text-white font-display">Welcome back, {patient.fullName}</h2>
+          <h2 className="text-2xl font-bold text-white font-display">{t('welcomeBack')} {patient.fullName}</h2>
           <p className="text-xs text-[#D0EBD2] mt-1">
             Permanent Health ID: <span className="font-mono text-white font-bold">{patient.permanentId}</span> • ABHA: <span className="font-mono text-white font-bold">{patient.abhaId}</span>
           </p>
@@ -38,13 +38,13 @@ export const CitizenDashboard: React.FC<CitizenDashboardProps> = ({
             onClick={onOpenAIIntake}
             className="bg-[#66BB6A] text-[#1B5E20] font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-[#54a858] transition-all flex items-center gap-1.5 shadow"
           >
-            <Bot className="w-4 h-4" /> Start AI Health Intake
+            <Bot className="w-4 h-4" /> {t('startAIIntake')}
           </button>
           <button
             onClick={onOpenReportModal}
             className="bg-[#123814] text-white border border-[#27702C] font-semibold text-xs px-4 py-2.5 rounded-xl hover:bg-[#1B5E20] transition-all flex items-center gap-1.5"
           >
-            <PlusCircle className="w-4 h-4 text-[#66BB6A]" /> Report New Item
+            <PlusCircle className="w-4 h-4 text-[#66BB6A]" /> {t('reportNewItem')}
           </button>
         </div>
       </div>
@@ -55,8 +55,8 @@ export const CitizenDashboard: React.FC<CitizenDashboardProps> = ({
           <AlertOctagon className="w-6 h-6 text-[#DC2626] shrink-0 mt-0.5" />
           <div className="flex-1">
             <div className="flex items-center gap-2 font-bold text-sm">
-              <span>🔴 CRITICAL MEDICAL ALERT VISIBLE TO DOCTORS</span>
-              <span className="bg-[#B91C1C] text-white text-[10px] uppercase px-2 py-0.5 rounded font-extrabold">Doctor Verified</span>
+              <span>🔴 {t('criticalMedicalAlert')}</span>
+              <span className="bg-[#B91C1C] text-white text-[10px] uppercase px-2 py-0.5 rounded font-extrabold">{t('doctorVerified')}</span>
             </div>
             <p className="text-xs mt-1 text-[#7F1D1D]">
               <strong>{criticalAllergies[0].allergen}:</strong> {criticalAllergies[0].reaction} (Verified by {criticalAllergies[0].verifiedBy})
@@ -79,7 +79,7 @@ export const CitizenDashboard: React.FC<CitizenDashboardProps> = ({
           className="card cursor-pointer hover:border-[#66BB6A] transition-all border-l-4 border-l-[#DC2626]"
         >
           <div className="flex justify-between items-start mb-2">
-            <span className="text-xs font-semibold text-[#38523C] uppercase">Critical Allergies</span>
+            <span className="text-xs font-semibold text-[#38523C] uppercase">{t('criticalAllergiesStat')}</span>
             <AlertOctagon className="w-5 h-5 text-[#DC2626]" />
           </div>
           <div className="text-2xl font-bold text-[#1B5E20]">{patient.allergies.length}</div>
@@ -94,12 +94,12 @@ export const CitizenDashboard: React.FC<CitizenDashboardProps> = ({
           className="card cursor-pointer hover:border-[#66BB6A] transition-all border-l-4 border-l-[#1B5E20]"
         >
           <div className="flex justify-between items-start mb-2">
-            <span className="text-xs font-semibold text-[#38523C] uppercase">Active Medicines</span>
+            <span className="text-xs font-semibold text-[#38523C] uppercase">{t('activeMedsStat')}</span>
             <Pill className="w-5 h-5 text-[#1B5E20]" />
           </div>
           <div className="text-2xl font-bold text-[#1B5E20]">{activeMeds.length}</div>
           <p className="text-[11px] text-[#2E7D32] mt-1 flex items-center gap-1 font-medium">
-            {verifiedMeds.length} Doctor Verified <ArrowRight className="w-3 h-3" />
+            {verifiedMeds.length} {t('doctorVerified')} <ArrowRight className="w-3 h-3" />
           </p>
         </div>
 
@@ -109,7 +109,7 @@ export const CitizenDashboard: React.FC<CitizenDashboardProps> = ({
           className="card cursor-pointer hover:border-[#66BB6A] transition-all border-l-4 border-l-[#A5D6A7]"
         >
           <div className="flex justify-between items-start mb-2">
-            <span className="text-xs font-semibold text-[#38523C] uppercase">Previous Surgeries</span>
+            <span className="text-xs font-semibold text-[#38523C] uppercase">{t('surgeriesStat')}</span>
             <Activity className="w-5 h-5 text-[#1B5E20]" />
           </div>
           <div className="text-2xl font-bold text-[#1B5E20]">{patient.operations.length}</div>
@@ -124,7 +124,7 @@ export const CitizenDashboard: React.FC<CitizenDashboardProps> = ({
           className="card cursor-pointer hover:border-[#66BB6A] transition-all border-l-4 border-l-[#2563EB]"
         >
           <div className="flex justify-between items-start mb-2">
-            <span className="text-xs font-semibold text-[#38523C] uppercase">Medical Documents</span>
+            <span className="text-xs font-semibold text-[#38523C] uppercase">{t('medDocsStat')}</span>
             <FileText className="w-5 h-5 text-[#2563EB]" />
           </div>
           <div className="text-2xl font-bold text-[#1B5E20]">{patient.documents.length}</div>
@@ -136,7 +136,7 @@ export const CitizenDashboard: React.FC<CitizenDashboardProps> = ({
 
       {/* Main Navigation Modules Grid */}
       <div className="bg-white rounded-2xl p-6 border border-[#C8E6C9] shadow-sm">
-        <h3 className="text-lg font-bold text-[#1B5E20] mb-4 font-display">Health Profile Navigation</h3>
+        <h3 className="text-lg font-bold text-[#1B5E20] mb-4 font-display">{t('healthProfileNav')}</h3>
         <p className="text-xs text-[#38523C] mb-6">
           Access specific health domain records below. Patient inputs remain pending until verified by doctor.
         </p>

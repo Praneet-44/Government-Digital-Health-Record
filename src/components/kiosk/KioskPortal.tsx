@@ -3,7 +3,7 @@ import { useHealthRecord } from '../../context/HealthRecordContext.tsx';
 import { Mic, Touchpad, FileText, Volume2, Globe, AlertTriangle, ArrowRight, CheckCircle2, ShieldCheck, HeartPulse } from 'lucide-react';
 
 export const KioskPortal: React.FC = () => {
-  const { language, setLanguage, triggerTriageRedFlag } = useHealthRecord();
+  const { language, setLanguage, triggerTriageRedFlag, t } = useHealthRecord();
   const [kioskStep, setKioskStep] = useState<'welcome' | 'speak' | 'upload' | 'triageAlert'>('welcome');
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [redFlagSubmitted, setRedFlagSubmitted] = useState(false);
@@ -26,10 +26,10 @@ export const KioskPortal: React.FC = () => {
         {/* Kiosk Header */}
         <div className="bg-[#1B5E20] text-white rounded-3xl p-6 shadow-xl text-center space-y-3">
           <div className="inline-flex items-center gap-2 bg-[#27702C] text-[#A5D6A7] text-xs font-bold px-3 py-1 rounded-full border border-[#388E3C]">
-            <HeartPulse className="w-4 h-4 text-[#66BB6A]" /> Primary Health Kiosk (PHC Kiosk #04)
+            <HeartPulse className="w-4 h-4 text-[#66BB6A]" /> {t('kioskSubtitle')}
           </div>
-          <h2 className="text-3xl md:text-4xl font-extrabold font-display">MediKiosk Health Assistant</h2>
-          <p className="text-sm text-[#D0EBD2]">Tap buttons or speak into the microphone to update your health record</p>
+          <h2 className="text-3xl md:text-4xl font-extrabold font-display">{t('kioskTitle')}</h2>
+          <p className="text-sm text-[#D0EBD2]">{t('speakLanguage')}</p>
 
           {/* Audio Instructions & Language Bar */}
           <div className="flex flex-wrap justify-center items-center gap-3 pt-2">
@@ -44,7 +44,7 @@ export const KioskPortal: React.FC = () => {
 
             <div className="flex items-center gap-1 bg-[#123814] px-3 py-1.5 rounded-xl border border-[#27702C]">
               <Globe className="w-4 h-4 text-[#A5D6A7]" />
-              <span className="text-xs font-bold text-white mr-1">Language:</span>
+              <span className="text-xs font-bold text-white mr-1">{t('selectLanguageText')}</span>
               <button
                 onClick={() => setLanguage('English')}
                 className={`text-xs px-2 py-0.5 rounded font-bold ${language === 'English' ? 'bg-[#66BB6A] text-[#1B5E20]' : 'text-white'}`}
@@ -70,7 +70,7 @@ export const KioskPortal: React.FC = () => {
         {/* Step 1: Kiosk Welcome Options */}
         {kioskStep === 'welcome' && (
           <div className="bg-white rounded-3xl p-8 border-2 border-[#C8E6C9] shadow-xl space-y-6 text-center">
-            <h3 className="text-2xl font-bold text-[#1B5E20] font-display">What would you like to do?</h3>
+            <h3 className="text-2xl font-bold text-[#1B5E20] font-display">{t('kioskSubtitle')}</h3>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Option 1: Speak Symptoms */}
@@ -81,8 +81,8 @@ export const KioskPortal: React.FC = () => {
                 <div className="w-16 h-16 rounded-2xl bg-[#1B5E20] text-white flex items-center justify-center shadow-lg group-hover:bg-[#66BB6A] group-hover:text-[#1B5E20]">
                   <Mic className="w-8 h-8" />
                 </div>
-                <h4 className="text-xl font-bold text-[#1B5E20]">🎤 Speak History</h4>
-                <p className="text-xs text-[#38523C]">Talk to AI assistant in your spoken language</p>
+                <h4 className="text-xl font-bold text-[#1B5E20]">🎤 {t('aiVoiceAssistant')}</h4>
+                <p className="text-xs text-[#38523C]">{t('speakLanguage')}</p>
               </button>
 
               {/* Option 2: Tap Touch Screen */}
@@ -93,8 +93,8 @@ export const KioskPortal: React.FC = () => {
                 <div className="w-16 h-16 rounded-2xl bg-[#1B5E20] text-white flex items-center justify-center shadow-lg group-hover:bg-[#66BB6A] group-hover:text-[#1B5E20]">
                   <Touchpad className="w-8 h-8" />
                 </div>
-                <h4 className="text-xl font-bold text-[#1B5E20]">👆 Tap Screen</h4>
-                <p className="text-xs text-[#38523C]">Select symptoms or report allergy with touch buttons</p>
+                <h4 className="text-xl font-bold text-[#1B5E20]">👆 {t('quickSymptoms')}</h4>
+                <p className="text-xs text-[#38523C]">{t('kioskSubtitle')}</p>
               </button>
 
               {/* Option 3: Upload Report */}
@@ -105,8 +105,8 @@ export const KioskPortal: React.FC = () => {
                 <div className="w-16 h-16 rounded-2xl bg-[#1B5E20] text-white flex items-center justify-center shadow-lg group-hover:bg-[#66BB6A] group-hover:text-[#1B5E20]">
                   <FileText className="w-8 h-8" />
                 </div>
-                <h4 className="text-xl font-bold text-[#1B5E20]">📄 Scan Paper Report</h4>
-                <p className="text-xs text-[#38523C]">Place prescription under kiosk document scanner</p>
+                <h4 className="text-xl font-bold text-[#1B5E20]">📄 {t('uploadDocOCR')}</h4>
+                <p className="text-xs text-[#38523C]">{t('scanDesc')}</p>
               </button>
             </div>
           </div>
@@ -120,8 +120,8 @@ export const KioskPortal: React.FC = () => {
             </div>
 
             <div>
-              <h3 className="text-2xl font-bold text-[#1B5E20] font-display">Listening... Please Speak Clearly</h3>
-              <p className="text-sm text-[#38523C] mt-1">Example: "I have stomach pain on the lower right side since yesterday."</p>
+              <h3 className="text-2xl font-bold text-[#1B5E20] font-display">{t('listening')}</h3>
+              <p className="text-sm text-[#38523C] mt-1">{t('speakLanguage')}</p>
             </div>
 
             <div className="bg-[#E8F5E9] p-4 rounded-xl border border-[#C8E6C9] max-w-md mx-auto text-left">
@@ -150,7 +150,7 @@ export const KioskPortal: React.FC = () => {
         {kioskStep === 'triageAlert' && (
           <div className="bg-white rounded-3xl p-8 border-2 border-[#C8E6C9] shadow-xl space-y-6">
             <div className="text-center max-w-md mx-auto">
-              <h3 className="text-2xl font-bold text-[#1B5E20] font-display">Health Worker Triage Check</h3>
+              <h3 className="text-2xl font-bold text-[#1B5E20] font-display">{t('quickSymptoms')}</h3>
               <p className="text-xs text-[#38523C] mt-1">Select any severe symptoms for priority doctor assessment:</p>
             </div>
 
@@ -161,8 +161,8 @@ export const KioskPortal: React.FC = () => {
               >
                 <AlertTriangle className="w-6 h-6 text-[#DC2626] shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-bold text-sm text-[#B91C1C]">Severe Chest Pain / Shortness of Breath</h4>
-                  <span className="text-[10px] text-[#991B1B] font-semibold">Triggers Immediate Priority Token #100</span>
+                  <h4 className="font-bold text-sm text-[#B91C1C]">{t('chestPainOption')}</h4>
+                  <span className="text-[10px] text-[#991B1B] font-semibold">Triggers Immediate Priority Token</span>
                 </div>
               </button>
 
@@ -172,7 +172,7 @@ export const KioskPortal: React.FC = () => {
               >
                 <CheckCircle2 className="w-6 h-6 text-[#1B5E20] shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-bold text-sm text-[#1B5E20]">Standard OPD Symptoms (Fever / Cough)</h4>
+                  <h4 className="font-bold text-sm text-[#1B5E20]">{t('feverOption')}</h4>
                   <span className="text-[10px] text-[#38523C]">Standard OPD Consultation Queue</span>
                 </div>
               </button>
@@ -205,8 +205,8 @@ export const KioskPortal: React.FC = () => {
             </div>
 
             <div>
-              <h3 className="text-2xl font-bold text-[#1B5E20] font-display">Document Scanner Active</h3>
-              <p className="text-sm text-[#38523C] mt-1">Scanning paper report... AI extracting medicines & hospital details.</p>
+              <h3 className="text-2xl font-bold text-[#1B5E20] font-display">{t('uploadDocOCR')}</h3>
+              <p className="text-sm text-[#38523C] mt-1">{t('dropFile')}</p>
             </div>
 
             <div className="bg-[#EFF6FF] p-4 rounded-xl border border-[#BFDBFE] max-w-md mx-auto text-left">

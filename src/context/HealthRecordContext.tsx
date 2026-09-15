@@ -11,11 +11,14 @@ import type {
   ConsentLog
 } from '../types/health.ts';
 
+import { t as translateHelper } from '../utils/translations.ts';
+
 interface HealthRecordContextType {
   role: UserRole;
   setRole: (role: UserRole) => void;
   language: string;
   setLanguage: (lang: string) => void;
+  t: (key: string) => string;
   activeTab: string;
   setActiveTab: (tab: string) => void;
   patient: CitizenProfile;
@@ -310,6 +313,7 @@ export const HealthRecordProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setRole,
         language,
         setLanguage,
+        t: (key: string) => translateHelper(key, language),
         activeTab,
         setActiveTab,
         patient,

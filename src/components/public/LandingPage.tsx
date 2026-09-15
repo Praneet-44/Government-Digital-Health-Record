@@ -4,52 +4,52 @@ import type { UserRole } from '../../types/health.ts';
 import { ShieldCheck, Stethoscope, User, Monitor, UserPlus, Building2, ArrowRight } from 'lucide-react';
 
 export const LandingPage: React.FC = () => {
-  const { setRole } = useHealthRecord();
+  const { setRole, t } = useHealthRecord();
 
   const portalCards: { role: UserRole; title: string; desc: string; icon: React.ReactNode; badge: string; btnText: string; color: string }[] = [
     {
       role: 'citizen',
-      title: 'Citizen Health Portal',
-      desc: 'Access your permanent digital health profile, view verified clinical timeline, active medications, and report health changes.',
+      title: t('citizenCardTitle'),
+      desc: t('citizenCardDesc'),
       icon: <User className="w-7 h-7 text-[#1B5E20]" />,
       badge: 'ABHA & OTP Login',
-      btnText: 'Enter Patient Portal',
+      btnText: t('enterCitizenPortal'),
       color: 'from-[#E8F5E9] to-[#D4EDD6]'
     },
     {
       role: 'doctor',
-      title: 'Doctor Clinical Workspace',
-      desc: 'Review OPD patient queue, verify patient-reported claims, inspect AI summaries, and issue verified prescriptions.',
+      title: t('doctorCardTitle'),
+      desc: t('doctorCardDesc'),
       icon: <Stethoscope className="w-7 h-7 text-[#1B5E20]" />,
       badge: 'Authorized Medical Staff',
-      btnText: 'Open Doctor Workspace',
+      btnText: t('openDoctorWorkspace'),
       color: 'from-[#E8F5E9] to-[#C8E6C9]'
     },
     {
       role: 'kiosk',
-      title: 'Health Worker & Kiosk',
-      desc: 'Touch-optimized intake kiosk with multilingual voice assistant (English, Hindi, Tamil) for PHCs and OPD waiting halls.',
+      title: t('kioskCardTitle'),
+      desc: t('kioskCardDesc'),
       icon: <Monitor className="w-7 h-7 text-[#1B5E20]" />,
       badge: 'Touch & Voice Kiosk',
-      btnText: 'Launch Kiosk Mode',
+      btnText: t('launchKioskMode'),
       color: 'from-[#E8F5E9] to-[#D4EDD6]'
     },
     {
       role: 'operator',
-      title: 'Registration Desk',
-      desc: 'Search existing citizens, onboard new patients, issue permanent Health IDs (GOV-IND-2026), and assign OPD tokens.',
+      title: t('operatorCardTitle'),
+      desc: t('operatorCardDesc'),
       icon: <UserPlus className="w-7 h-7 text-[#1B5E20]" />,
       badge: 'Hospital Counter',
-      btnText: 'Access Registration',
+      btnText: t('accessRegistration'),
       color: 'from-[#E8F5E9] to-[#C8E6C9]'
     },
     {
       role: 'admin',
-      title: 'Government Admin',
-      desc: 'Monitor health infrastructure usage across PHCs, CHCs, District Hospitals, digitized records, and security audit logs.',
+      title: t('adminCardTitle'),
+      desc: t('adminCardDesc'),
       icon: <Building2 className="w-7 h-7 text-[#1B5E20]" />,
       badge: 'Ministry Admin',
-      btnText: 'View Admin Dashboard',
+      btnText: t('viewAdminDashboard'),
       color: 'from-[#E8F5E9] to-[#D4EDD6]'
     }
   ];
@@ -66,23 +66,22 @@ export const LandingPage: React.FC = () => {
           {/* Badge */}
           <div className="inline-flex items-center gap-2 bg-[#1B5E20] text-white text-xs font-bold px-4 py-2 rounded-full mb-8 border border-[#4CAF50] shadow-md">
             <ShieldCheck className="w-4 h-4 text-white" />
-            <span className="text-white">National Digital Health Infrastructure • Ministry of Health & Family Welfare</span>
+            <span className="text-white">{t('govNetwork')}</span>
           </div>
 
           {/* Main Title */}
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight mb-6 text-white leading-tight font-display drop-shadow-lg">
-            MediKiosk Platform
+            {t('heroTitle')}
           </h1>
 
           {/* Tagline */}
           <p className="text-xl sm:text-2xl text-white font-semibold mb-6 tracking-wide drop-shadow-sm">
-            One Citizen → One Permanent Health Profile → Universal Care
+            {t('heroTagline')}
           </p>
 
           {/* Description */}
           <p className="text-sm sm:text-base text-white max-w-2xl mx-auto mb-10 leading-relaxed font-medium">
-            Eliminate repeated OPD history taking, lost paper prescriptions, and fragmented medical records. 
-            AI-assisted clinical intake with physician verification across PHCs, District Hospitals, and Medical Colleges.
+            {t('heroDesc')}
           </p>
 
           {/* Primary Action Buttons */}
@@ -91,14 +90,14 @@ export const LandingPage: React.FC = () => {
               onClick={() => setRole('citizen')}
               className="bg-[#66BB6A] text-[#0A260C] font-black text-base px-8 py-4 rounded-2xl shadow-xl hover:bg-[#52ab56] hover:scale-[1.03] transition-all flex items-center gap-2"
             >
-              Access My Citizen Record <ArrowRight className="w-5 h-5 stroke-[3]" />
+              {t('accessCitizenRecord')} <ArrowRight className="w-5 h-5 stroke-[3]" />
             </button>
 
             <button
               onClick={() => setRole('doctor')}
               className="bg-[#0A260C] text-white font-bold text-base px-8 py-4 rounded-2xl border-2 border-white hover:bg-[#1B5E20] hover:scale-[1.03] transition-all flex items-center gap-2 shadow-lg"
             >
-              Doctor Clinical Login <Stethoscope className="w-5 h-5 text-white" />
+              {t('doctorClinicalLogin')} <Stethoscope className="w-5 h-5 text-white" />
             </button>
           </div>
         </div>
@@ -108,13 +107,13 @@ export const LandingPage: React.FC = () => {
       <section className="py-16 px-4 container mx-auto">
         <div className="text-center max-w-2xl mx-auto mb-12">
           <span className="text-xs font-extrabold text-[#1B5E20] uppercase tracking-widest bg-[#E8F5E9] px-4 py-1.5 rounded-full border border-[#A5D6A7]">
-            Multi-Stakeholder Access
+            {t('multiStakeholder')}
           </span>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-[#1B5E20] mt-3 font-display">
-            Select Portal Access Role
+            {t('selectRole')}
           </h2>
           <p className="text-sm text-[#38523C] mt-2">
-            Experience the tailored interface for each healthcare role in government OPD operations:
+            {t('roleSubText')}
           </p>
         </div>
 
@@ -154,10 +153,10 @@ export const LandingPage: React.FC = () => {
         <div className="container mx-auto max-w-5xl">
           <div className="text-center mb-12">
             <span className="text-xs font-extrabold uppercase tracking-widest text-[#1B5E20] bg-[#E8F5E9] px-4 py-1.5 rounded-full border border-[#A5D6A7]">
-              Central Safety Safeguard
+              {t('safetySubtitle')}
             </span>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-[#1B5E20] mt-3 font-display">
-              Patient Reported vs Doctor Verified Data
+              {t('safetyTitle')}
             </h2>
             <p className="text-sm text-[#38523C] max-w-2xl mx-auto mt-2">
               MediKiosk enforces a clear visual hierarchy to ensure unverified patient inputs never compromise clinical treatment safety.
@@ -167,33 +166,34 @@ export const LandingPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="p-6 rounded-3xl bg-[#FEF3C7] border-2 border-[#FDE68A] shadow-sm">
               <div className="flex items-center gap-2 text-[#B45309] font-extrabold text-base mb-2">
-                <span className="text-xl">🟡</span> 1. Patient Reported Data
+                <span className="text-xl">🟡</span> {t('patientReportedTitle')}
               </div>
               <p className="text-xs text-[#78350F] leading-relaxed">
-                Citizen reports symptoms, past allergies, or current medicines. Items are saved as 🟡 <strong>Pending Verification</strong> and flagged for doctor review.
+                {t('patientReportedDesc')}
               </p>
             </div>
 
             <div className="p-6 rounded-3xl bg-[#EFF6FF] border-2 border-[#BFDBFE] shadow-sm">
               <div className="flex items-center gap-2 text-[#1D4ED8] font-extrabold text-base mb-2">
-                <span className="text-xl">🔵</span> 2. AI OCR Extracted
+                <span className="text-xl">🔵</span> {t('ocrTitle')}
               </div>
               <p className="text-xs text-[#1E40AF] leading-relaxed">
-                Uploaded prescription scans or lab reports are parsed by AI entity extractors and marked 🔵 <strong>Imported</strong> for doctor validation.
+                {t('ocrDesc')}
               </p>
             </div>
 
             <div className="p-6 rounded-3xl bg-[#E8F5E9] border-2 border-[#A5D6A7] shadow-sm">
               <div className="flex items-center gap-2 text-[#1B5E20] font-extrabold text-base mb-2">
-                <span className="text-xl">🟢</span> 3. Doctor Verified Record
+                <span className="text-xl">🟢</span> {t('verifiedTitle')}
               </div>
               <p className="text-xs text-[#144517] leading-relaxed">
-                An authorized physician confirms patient or OCR claims during OPD consultation. Item converts to 🟢 <strong>Verified Clinical Fact</strong> permanently.
+                {t('verifiedDesc')}
               </p>
             </div>
           </div>
         </div>
       </section>
+
 
       {/* Footer */}
       <footer className="bg-[#071F09] text-[#A5D6A7] py-10 text-xs text-center border-t-2 border-[#1E5723]">

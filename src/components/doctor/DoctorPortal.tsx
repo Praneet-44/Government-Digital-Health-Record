@@ -3,7 +3,7 @@ import { useHealthRecord } from '../../context/HealthRecordContext';
 import { Stethoscope, CheckCircle2, XCircle, AlertOctagon, Bot, Pill, Activity, FileText, PlusCircle, ShieldAlert, Check, X, Sparkles } from 'lucide-react';
 
 export const DoctorPortal: React.FC = () => {
-  const { patient, verificationQueue, verifyItem, addDoctorNote } = useHealthRecord();
+  const { patient, verificationQueue, verifyItem, addDoctorNote, t } = useHealthRecord();
   const [activeDoctorTab, setActiveDoctorTab] = useState<'overview' | 'verification' | 'notes'>('overview');
   const [newNoteType, setNewNoteType] = useState<'medication' | 'allergy'>('medication');
   const [newNoteName, setNewNoteName] = useState('');
@@ -26,17 +26,17 @@ export const DoctorPortal: React.FC = () => {
         <div className="bg-gradient-to-r from-[#1B5E20] to-[#123814] text-white rounded-2xl p-6 shadow-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <div className="flex items-center gap-2 text-xs font-semibold text-[#A5D6A7] uppercase tracking-wider mb-1">
-              <Stethoscope className="w-4 h-4 text-[#66BB6A]" /> Authorized Government Physician Workspace
+              <Stethoscope className="w-4 h-4 text-[#66BB6A]" /> {t('authPhysician')}
             </div>
-            <h2 className="text-2xl font-bold font-display">Dr. R. K. Sharma (MD, Senior Physician)</h2>
+            <h2 className="text-2xl font-bold font-display">{t('docName')}</h2>
             <p className="text-xs text-[#D0EBD2] mt-0.5">
-              District Hospital OPD • General Medicine Department • License #GOV-MED-44109
+              {t('docFacility')}
             </p>
           </div>
 
           <div className="flex items-center gap-3">
             <div className="bg-[#123814] px-4 py-2 rounded-xl border border-[#27702C] text-center">
-              <span className="text-[10px] text-[#A5D6A7] block font-semibold uppercase">Pending Verification</span>
+              <span className="text-[10px] text-[#A5D6A7] block font-semibold uppercase">{t('pendingVerification')}</span>
               <span className="text-xl font-extrabold text-[#FDE68A]">{pendingVerificationItems.length} Items</span>
             </div>
           </div>
@@ -48,7 +48,7 @@ export const DoctorPortal: React.FC = () => {
           <div className="space-y-4">
             <div className="bg-white rounded-2xl p-4 border border-[#C8E6C9]">
               <h3 className="text-sm font-bold text-[#1B5E20] mb-3 uppercase tracking-wider flex items-center justify-between">
-                <span>Today's OPD Queue</span>
+                <span>{t('todaysQueue')}</span>
                 <span className="bg-[#E8F5E9] text-[#1B5E20] text-[10px] px-2 py-0.5 rounded-full font-bold">3 Tokens</span>
               </h3>
 
@@ -59,7 +59,7 @@ export const DoctorPortal: React.FC = () => {
                     <span className="font-extrabold text-[#1B5E20] text-xs bg-[#66BB6A] text-[#1B5E20] px-2 py-0.5 rounded">
                       Token 101
                     </span>
-                    <span className="text-[10px] text-[#B91C1C] font-bold">🔴 Critical Allergy</span>
+                    <span className="text-[10px] text-[#B91C1C] font-bold">🔴 {t('criticalAllergy')}</span>
                   </div>
                   <h4 className="font-bold text-sm text-[#122415]">{patient.fullName}</h4>
                   <p className="text-[11px] text-[#38523C]">Male, 32 yrs • ABHA: {patient.abhaId}</p>
@@ -71,7 +71,7 @@ export const DoctorPortal: React.FC = () => {
                     <span className="font-bold text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-700">
                       Token 102
                     </span>
-                    <span className="text-[10px] text-[#B45309] font-bold">🟡 2 Pending Verification</span>
+                    <span className="text-[10px] text-[#B45309] font-bold">🟡 2 {t('pendingVerification')}</span>
                   </div>
                   <h4 className="font-bold text-sm text-[#122415]">Sunita Verma</h4>
                   <p className="text-[11px] text-[#38523C]">Female, 45 yrs • PHC Referral</p>
@@ -83,7 +83,7 @@ export const DoctorPortal: React.FC = () => {
                     <span className="font-bold text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-700">
                       Token 103
                     </span>
-                    <span className="text-[10px] text-gray-500 font-bold">Routine Follow-up</span>
+                    <span className="text-[10px] text-gray-500 font-bold">{t('routineFollowup')}</span>
                   </div>
                   <h4 className="font-bold text-sm text-[#122415]">Rajesh Patel</h4>
                   <p className="text-[11px] text-[#38523C]">Male, 58 yrs • Diabetes OPD</p>
@@ -94,7 +94,7 @@ export const DoctorPortal: React.FC = () => {
             {/* AI Patient Summary Card */}
             <div className="bg-white rounded-2xl p-4 border border-[#C8E6C9]">
               <div className="flex items-center gap-2 text-[#1B5E20] font-bold text-xs mb-2">
-                <Bot className="w-4 h-4 text-[#66BB6A]" /> AI Clinical Intake Pre-Summary
+                <Bot className="w-4 h-4 text-[#66BB6A]" /> {t('aiIntakePreSummary')}
               </div>
               <p className="text-xs text-[#38523C] bg-[#EFF6FF] p-3 rounded-xl border border-[#BFDBFE] leading-relaxed">
                 Patient reports mild cough and sore throat for 2 days. Self-prescribed Amoxicillin 250mg yesterday. <strong>Verified Penicillin Allergy</strong> on record!
@@ -110,7 +110,7 @@ export const DoctorPortal: React.FC = () => {
                 <div className="flex items-center gap-2 mb-1">
                   <h3 className="text-2xl font-bold text-[#1B5E20] font-display">{patient.fullName}</h3>
                   <span className="bg-[#E8F5E9] text-[#1B5E20] text-xs font-bold px-2.5 py-0.5 rounded-full border border-[#A5D6A7]">
-                    Blood: {patient.bloodGroup}
+                    {t('bloodGroup')}: {patient.bloodGroup}
                   </span>
                 </div>
                 <p className="text-xs text-[#38523C]">
@@ -121,7 +121,7 @@ export const DoctorPortal: React.FC = () => {
               {/* Critical Alert Warning */}
               <div className="bg-[#FEE2E2] border border-[#FCA5A5] px-4 py-2 rounded-xl flex items-center gap-2 text-[#B91C1C] text-xs font-bold">
                 <AlertOctagon className="w-5 h-5 shrink-0" />
-                <span>🔴 CONFIRMED PENICILLIN ALLERGY</span>
+                <span>🔴 {t('penicillinAllergy')}</span>
               </div>
             </div>
 
@@ -135,7 +135,7 @@ export const DoctorPortal: React.FC = () => {
                     : 'bg-white text-[#38523C] hover:bg-[#E8F5E9]'
                 }`}
               >
-                Clinical Profile & History
+                {t('clinicalProfileHistory')}
               </button>
               <button
                 onClick={() => setActiveDoctorTab('verification')}
@@ -145,7 +145,7 @@ export const DoctorPortal: React.FC = () => {
                     : 'bg-white text-[#38523C] hover:bg-[#E8F5E9]'
                 }`}
               >
-                Verification Queue
+                {t('verificationQueueTab')}
                 {pendingVerificationItems.length > 0 && (
                   <span className="bg-[#FDE68A] text-[#78350F] text-[10px] px-1.5 py-0.5 rounded-full font-extrabold">
                     {pendingVerificationItems.length}
@@ -160,7 +160,7 @@ export const DoctorPortal: React.FC = () => {
                     : 'bg-white text-[#38523C] hover:bg-[#E8F5E9]'
                 }`}
               >
-                Add Clinical Notes & Prescription
+                {t('addClinicalNotesPrescription')}
               </button>
             </div>
 
@@ -170,7 +170,7 @@ export const DoctorPortal: React.FC = () => {
                 {/* Verified Allergies */}
                 <div className="card">
                   <h4 className="font-bold text-[#1B5E20] text-sm mb-3 uppercase tracking-wider">
-                    Verified Allergies & Medical Safety Rules
+                    {t('verifiedAllergiesRules')}
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {patient.allergies.map((alg) => (
@@ -199,7 +199,7 @@ export const DoctorPortal: React.FC = () => {
                 {/* Active Medications */}
                 <div className="card">
                   <h4 className="font-bold text-[#1B5E20] text-sm mb-3 uppercase tracking-wider">
-                    Active Medications
+                    {t('activeMedicationsTitle')}
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {patient.medications.map((med) => (
@@ -223,10 +223,10 @@ export const DoctorPortal: React.FC = () => {
               <div className="bg-white rounded-2xl p-6 border border-[#C8E6C9] space-y-4">
                 <div>
                   <h3 className="text-xl font-bold text-[#1B5E20] font-display">
-                    Doctor Clinical Verification Engine
+                    {t('doctorVerificationEngine')}
                   </h3>
                   <p className="text-xs text-[#38523C] mt-0.5">
-                    Key Safeguard: Confirm patient-reported items or OCR scans before they become verified clinical history.
+                    {t('keySafeguard')}
                   </p>
                 </div>
 
@@ -259,18 +259,18 @@ export const DoctorPortal: React.FC = () => {
                               onClick={() => verifyItem(v.id, false)}
                               className="px-3 py-1.5 rounded-lg bg-white border border-[#DC2626] text-[#DC2626] hover:bg-[#FEE2E2] text-xs font-bold flex items-center gap-1"
                             >
-                              <X className="w-4 h-4" /> Reject
+                              <X className="w-4 h-4" /> {t('reject')}
                             </button>
                             <button
                               onClick={() => verifyItem(v.id, true)}
                               className="px-4 py-1.5 rounded-lg bg-[#1B5E20] text-white hover:bg-[#144517] text-xs font-bold flex items-center gap-1 shadow"
                             >
-                              <Check className="w-4 h-4 text-[#66BB6A]" /> Confirm Verification 🟢
+                              <Check className="w-4 h-4 text-[#66BB6A]" /> {t('confirmVerification')}
                             </button>
                           </div>
                         ) : (
                           <span className={`badge text-xs font-bold ${v.status === 'verified' ? 'badge-verified' : 'badge-critical'}`}>
-                            {v.status === 'verified' ? '🟢 Verified Clinical Fact' : '🔴 Rejected by Doctor'}
+                            {v.status === 'verified' ? `🟢 ${t('verifiedClinicalFact')}` : `🔴 ${t('rejectedByDoctor')}`}
                           </span>
                         )}
                       </div>
@@ -284,24 +284,24 @@ export const DoctorPortal: React.FC = () => {
             {activeDoctorTab === 'notes' && (
               <div className="bg-white rounded-2xl p-6 border border-[#C8E6C9]">
                 <h3 className="text-xl font-bold text-[#1B5E20] font-display mb-4">
-                  Add Clinical Prescription & Doctor Note
+                  {t('addPrescriptionNote')}
                 </h3>
 
                 <form onSubmit={handleAddDoctorNote} className="space-y-4 max-w-lg">
                   <div>
-                    <label className="block text-xs font-bold text-[#122415] mb-1">Entry Type</label>
+                    <label className="block text-xs font-bold text-[#122415] mb-1">{t('entryType')}</label>
                     <select
                       value={newNoteType}
                       onChange={(e: any) => setNewNoteType(e.target.value)}
                       className="w-full px-3 py-2 border border-[#C8E6C9] rounded-lg text-sm"
                     >
-                      <option value="medication">New Prescription Medication</option>
-                      <option value="allergy">Confirmed Severe Allergy Flag</option>
+                      <option value="medication">{t('newPrescriptionMed')}</option>
+                      <option value="allergy">{t('confirmedAllergyFlag')}</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#122415] mb-1">Name / Title</label>
+                    <label className="block text-xs font-bold text-[#122415] mb-1">{t('nameTitle')}</label>
                     <input
                       type="text"
                       required
@@ -313,7 +313,7 @@ export const DoctorPortal: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#122415] mb-1">Clinical Details / Instructions</label>
+                    <label className="block text-xs font-bold text-[#122415] mb-1">{t('clinicalDetailsInstructions')}</label>
                     <textarea
                       rows={3}
                       required
@@ -325,7 +325,7 @@ export const DoctorPortal: React.FC = () => {
                   </div>
 
                   <button type="submit" className="btn btn-primary text-xs flex items-center gap-2">
-                    <PlusCircle className="w-4 h-4 text-[#66BB6A]" /> Save to Permanent Citizen Record 🟢
+                    <PlusCircle className="w-4 h-4 text-[#66BB6A]" /> {t('savePermanentRecord')}
                   </button>
                 </form>
               </div>

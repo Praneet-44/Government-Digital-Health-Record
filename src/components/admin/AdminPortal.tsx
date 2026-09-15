@@ -3,7 +3,7 @@ import { useHealthRecord } from '../../context/HealthRecordContext.tsx';
 import { Building2, ShieldCheck, Clock, AlertTriangle, Users, FileText, CheckCircle2 } from 'lucide-react';
 
 export const AdminPortal: React.FC = () => {
-  const { allPatients, verificationQueue, triageRedFlagsCount } = useHealthRecord();
+  const { allPatients, verificationQueue, triageRedFlagsCount, t } = useHealthRecord();
 
   const totalRecords = allPatients.length;
   const totalDigitizedDocs = allPatients.reduce((acc, p) => acc + p.documents.length, 0);
