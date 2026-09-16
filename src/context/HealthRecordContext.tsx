@@ -8,7 +8,8 @@ import type {
   Operation,
   DocumentItem,
   TimelineEvent,
-  ConsentLog
+  ConsentLog,
+  DoctorStaff
 } from '../types/health.ts';
 
 import { t as translateHelper } from '../utils/translations.ts';
@@ -25,11 +26,15 @@ interface HealthRecordContextType {
   allPatients: CitizenProfile[];
   verificationQueue: VerificationItem[];
   triageRedFlagsCount: number;
+  doctorsList: DoctorStaff[];
   reportChange: (type: 'allergy' | 'medication' | 'operation' | 'condition', title: string, details: string) => void;
   verifyItem: (id: string, approve: boolean, doctorNotes?: string) => void;
+  modifyAndVerifyItem: (id: string, updatedTitle: string, updatedDetails: string, severity?: 'critical' | 'important' | 'normal') => void;
   uploadDocument: (title: string, category: any) => void;
   addDoctorNote: (type: 'medication' | 'allergy' | 'condition', name: string, detail: string) => void;
-  registerNewCitizen: (name: string, mobile: string, dob: string, gender: 'Male' | 'Female' | 'Other', bloodGroup: string) => CitizenProfile;
+  updateVitalsAndContact: (height: string, weight: string, emergencyContact: { name: string; relation: string; mobile: string }) => void;
+  registerNewCitizen: (name: string, mobile: string, dob: string, gender: 'Male' | 'Female' | 'Other', bloodGroup: string, aadhaarNumber: string) => { profile: CitizenProfile; isExisting: boolean };
+  onboardNewDoctor: (name: string, licenseNumber: string, department: string, facility: string, username: string) => void;
   triggerTriageRedFlag: () => void;
   notification: string | null;
   setNotification: (msg: string | null) => void;
@@ -39,6 +44,7 @@ interface HealthRecordContextType {
 const initialPatient: CitizenProfile = {
   abhaId: '91-4829-1092-4410',
   permanentId: 'GOV-IND-2026-88412',
+  aadhaarNumber: '5894 1029 4410',
   fullName: 'Praneet Kumar',
   dob: '15 Aug 1994',
   gender: 'Male',
@@ -92,6 +98,29 @@ export const HealthRecordProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [triageRedFlagsCount, setTriageRedFlagsCount] = useState<number>(0);
   const [notification, setNotification] = useState<string | null>(null);
 
+  const [doctorsList, setDoctorsList] = useState<DoctorStaff[]>([
+    {
+      id: 'doc-1',
+      fullName: 'Dr. R. K. Sharma (MD)',
+      licenseNumber: 'GOV-MED-44109',
+      department: 'General Medicine',
+      facility: 'District Hospital OPD',
+      username: 'dr.rk.sharma',
+      joinedDate: '10 Jan 2026',
+      status: 'active'
+    },
+    {
+      id: 'doc-2',
+      fullName: 'Dr. Priya Nair (MD)',
+      licenseNumber: 'GOV-MED-55912',
+      department: 'Pediatrics & Triage',
+      facility: 'Primary Health Centre (PHC)',
+      username: 'dr.priya.nair',
+      joinedDate: '01 Feb 2026',
+      status: 'active'
+    }
+  ]);
+
   const triggerNotify = (msg: string) => {
     setNotification(msg);
     setTimeout(() => {
@@ -104,13 +133,148 @@ export const HealthRecordProvider: React.FC<{ children: React.ReactNode }> = ({ 
     triggerNotify(`⚠️ Priority Triage Alert recorded! Total red flags: ${triageRedFlagsCount + 1}`);
   };
 
-  const registerNewCitizen = (name: string, mobile: string, dob: string, gender: 'Male' | 'Female' | 'Other', bloodGroup: string): CitizenProfile => {
+  const modifyAndVerifyItem = (
+    id: string,
+    updatedTitle: string,
+    updatedDetails: string,
+    severity: 'critical' | 'important' | 'normal' = 'important'
+  ) => {
+    setVerificationQueue(prev =>
+      prev.map(item =>
+        item.id === id
+          ? {
+              ...item,
+              status: 'verified',
+              title: `Doctor Corrected: ${updatedTitle}`,
+              details: `Doctor Note: ${updatedDetails}`
+            }
+          : item
+      )
+    );
+
+    const targetVq = verificationQueue.find(v => v.id === id);
+    if (targetVq) {
+      setPatient(prev => {
+        let updatedAllergies = [...prev.allergies];
+        let updatedMeds = [...prev.medications];
+
+        if (targetVq.type === 'allergy') {
+          const rawSearch = targetVq.title.replace('Patient Reported:', '').replace('Doctor Corrected:', '').trim().toLowerCase();
+          const existingAlgIndex = updatedAllergies.findIndex(a =>
+            a.allergen.toLowerCase().includes(rawSearch) || rawSearch.includes(a.allergen.toLowerCase())
+          );
+          if (existingAlgIndex >= 0) {
+            updatedAllergies[existingAlgIndex] = {
+              ...updatedAllergies[existingAlgIndex],
+              allergen: updatedTitle,
+              reaction: updatedDetails,
+              severity,
+              status: 'verified',
+              verifiedBy: 'Dr. R. K. Sharma',
+              verifiedDate: 'Today'
+            };
+          } else {
+            updatedAllergies.unshift({
+              id: `alg-doc-${Date.now()}`,
+              allergen: updatedTitle,
+              reaction: updatedDetails,
+              severity,
+              status: 'verified',
+              reportedBy: 'doctor',
+              verifiedBy: 'Dr. R. K. Sharma',
+              verifiedDate: 'Today'
+            });
+          }
+        } else if (targetVq.type === 'medication') {
+          const rawSearch = targetVq.title.replace('Patient Reported:', '').replace('AI OCR Scanned:', '').trim().toLowerCase();
+          const existingMedIndex = updatedMeds.findIndex(m =>
+            m.name.toLowerCase().includes(rawSearch) || rawSearch.includes(m.name.toLowerCase())
+          );
+          if (existingMedIndex >= 0) {
+            updatedMeds[existingMedIndex] = {
+              ...updatedMeds[existingMedIndex],
+              name: updatedTitle,
+              dosage: 'Doctor Prescribed',
+              frequency: updatedDetails,
+              clinicalStatus: 'verified',
+              prescribedBy: 'Verified & Corrected by Dr. R. K. Sharma'
+            };
+          } else {
+            updatedMeds.unshift({
+              id: `med-doc-${Date.now()}`,
+              name: updatedTitle,
+              dosage: 'Doctor Prescribed',
+              frequency: updatedDetails,
+              status: 'active',
+              clinicalStatus: 'verified',
+              prescribedBy: 'Verified & Corrected by Dr. R. K. Sharma',
+              startDate: 'Today'
+            });
+          }
+        }
+
+        return {
+          ...prev,
+          allergies: updatedAllergies,
+          medications: updatedMeds
+        };
+      });
+      triggerNotify(`🟢 Doctor MODIFIED & VERIFIED record: ${updatedTitle}`);
+    }
+  };
+
+  const onboardNewDoctor = (
+    name: string,
+    licenseNumber: string,
+    department: string,
+    facility: string,
+    username: string
+  ) => {
+    const newDoctor: DoctorStaff = {
+      id: `doc-${Date.now()}`,
+      fullName: name,
+      licenseNumber,
+      department,
+      facility,
+      username,
+      joinedDate: 'Today',
+      status: 'active'
+    };
+    setDoctorsList(prev => [newDoctor, ...prev]);
+    triggerNotify(`🎉 Authorized Doctor (${name}) onboarded! Login username: ${username}`);
+  };
+
+  const registerNewCitizen = (
+    name: string,
+    mobile: string,
+    dob: string,
+    gender: 'Male' | 'Female' | 'Other',
+    bloodGroup: string,
+    aadhaarNumber: string
+  ): { profile: CitizenProfile; isExisting: boolean } => {
+    const cleanAadhaar = aadhaarNumber.replace(/\D/g, '');
+    const cleanMobile = mobile.replace(/\D/g, '');
+
+    // Check if citizen with same Aadhaar or Mobile already exists
+    const existing = allPatients.find(p => {
+      const pAadhaar = (p.aadhaarNumber || '').replace(/\D/g, '');
+      const pMobile = (p.mobile || '').replace(/\D/g, '');
+      return (cleanAadhaar && pAadhaar === cleanAadhaar) || (cleanMobile && pMobile === cleanMobile);
+    });
+
+    if (existing) {
+      setPatient(existing);
+      triggerNotify(`ℹ️ Existing Permanent Health ID (${existing.permanentId}) loaded!`);
+      return { profile: existing, isExisting: true };
+    }
+
     const newId = `GOV-IND-2026-${Math.floor(10000 + Math.random() * 90000)}`;
     const newAbha = `91-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`;
 
     const newProfile: CitizenProfile = {
       abhaId: newAbha,
       permanentId: newId,
+      aadhaarNumber,
       fullName: name,
       dob,
       gender,
@@ -145,8 +309,8 @@ export const HealthRecordProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     setAllPatients(prev => [...prev, newProfile]);
     setPatient(newProfile);
-    triggerNotify(`🎉 New Citizen Registered! Total Registered Profiles: ${allPatients.length + 1}`);
-    return newProfile;
+    triggerNotify(`🎉 Permanent Health ID Issued! Total Profiles: ${allPatients.length + 1}`);
+    return { profile: newProfile, isExisting: false };
   };
 
   const reportChange = (type: 'allergy' | 'medication' | 'operation' | 'condition', title: string, details: string) => {
@@ -306,6 +470,38 @@ export const HealthRecordProvider: React.FC<{ children: React.ReactNode }> = ({ 
     triggerNotify(`🟢 Prescription record updated directly by Doctor!`);
   };
 
+  const updateVitalsAndContact = (
+    height: string,
+    weight: string,
+    emergencyContact: { name: string; relation: string; mobile: string }
+  ) => {
+    setPatient(prev => {
+      const updated = {
+        ...prev,
+        height,
+        weight,
+        emergencyContact,
+        timeline: [
+          {
+            id: `tl-${Date.now()}`,
+            date: 'Today',
+            title: 'Height, Weight & Emergency Contact Updated',
+            category: 'consultation' as const,
+            facility: 'Citizen Self-Service Portal',
+            clinicalStatus: 'verified' as const,
+            summary: `Updated: Height (${height}), Weight (${weight}), Contact (${emergencyContact.name} - ${emergencyContact.mobile}).`
+          },
+          ...prev.timeline
+        ]
+      };
+
+      setAllPatients(all => all.map(p => p.permanentId === prev.permanentId ? updated : p));
+      return updated;
+    });
+
+    triggerNotify(`✅ Profile updated! Height: ${height}, Weight: ${weight}, Contact: ${emergencyContact.name}`);
+  };
+
   return (
     <HealthRecordContext.Provider
       value={{
@@ -320,11 +516,15 @@ export const HealthRecordProvider: React.FC<{ children: React.ReactNode }> = ({ 
         allPatients,
         verificationQueue,
         triageRedFlagsCount,
+        doctorsList,
         reportChange,
         verifyItem,
+        modifyAndVerifyItem,
         uploadDocument,
         addDoctorNote,
+        updateVitalsAndContact,
         registerNewCitizen,
+        onboardNewDoctor,
         triggerTriageRedFlag,
         notification,
         setNotification

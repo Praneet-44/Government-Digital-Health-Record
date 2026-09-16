@@ -1,13 +1,20 @@
 import React, { useState } from 'react';
 import { useHealthRecord } from '../../context/HealthRecordContext';
-import { Stethoscope, CheckCircle2, XCircle, AlertOctagon, Bot, Pill, Activity, FileText, PlusCircle, ShieldAlert, Check, X, Sparkles } from 'lucide-react';
+import { Stethoscope, CheckCircle2, XCircle, AlertOctagon, Bot, Pill, Activity, FileText, PlusCircle, ShieldAlert, Check, X, Sparkles, Edit3, ShieldCheck } from 'lucide-react';
+import type { VerificationItem } from '../../types/health';
 
 export const DoctorPortal: React.FC = () => {
-  const { patient, verificationQueue, verifyItem, addDoctorNote, t } = useHealthRecord();
+  const { patient, verificationQueue, verifyItem, modifyAndVerifyItem, addDoctorNote, t } = useHealthRecord();
   const [activeDoctorTab, setActiveDoctorTab] = useState<'overview' | 'verification' | 'notes'>('overview');
   const [newNoteType, setNewNoteType] = useState<'medication' | 'allergy'>('medication');
   const [newNoteName, setNewNoteName] = useState('');
   const [newNoteDetail, setNewNoteDetail] = useState('');
+
+  // Doctor Edit & Correct Modal State
+  const [editingVqItem, setEditingVqItem] = useState<VerificationItem | null>(null);
+  const [modTitle, setModTitle] = useState('');
+  const [modDetails, setModDetails] = useState('');
+  const [modSeverity, setModSeverity] = useState<'critical' | 'important' | 'normal'>('important');
 
   const pendingVerificationItems = verificationQueue.filter(v => v.status === 'pending');
 
@@ -17,6 +24,21 @@ export const DoctorPortal: React.FC = () => {
     addDoctorNote(newNoteType, newNoteName, newNoteDetail);
     setNewNoteName('');
     setNewNoteDetail('');
+  };
+
+  const handleOpenEditModal = (item: VerificationItem) => {
+    setEditingVqItem(item);
+    const cleanTitle = item.title.replace('Patient Reported:', '').replace('AI OCR Scanned:', '').trim();
+    setModTitle(cleanTitle);
+    setModDetails(item.details);
+    setModSeverity(cleanTitle.toLowerCase().includes('penicillin') || cleanTitle.toLowerCase().includes('allergy') ? 'critical' : 'important');
+  };
+
+  const handleSaveCorrection = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingVqItem || !modTitle) return;
+    modifyAndVerifyItem(editingVqItem.id, modTitle, modDetails, modSeverity);
+    setEditingVqItem(null);
   };
 
   return (
@@ -254,12 +276,18 @@ export const DoctorPortal: React.FC = () => {
                         </div>
 
                         {v.status === 'pending' ? (
-                          <div className="flex items-center gap-2 shrink-0">
+                          <div className="flex flex-wrap items-center gap-2 shrink-0">
                             <button
                               onClick={() => verifyItem(v.id, false)}
                               className="px-3 py-1.5 rounded-lg bg-white border border-[#DC2626] text-[#DC2626] hover:bg-[#FEE2E2] text-xs font-bold flex items-center gap-1"
                             >
                               <X className="w-4 h-4" /> {t('reject')}
+                            </button>
+                            <button
+                              onClick={() => handleOpenEditModal(v)}
+                              className="px-3.5 py-1.5 rounded-lg bg-[#123814] text-white border border-[#27702C] hover:bg-[#1B5E20] text-xs font-bold flex items-center gap-1.5 shadow"
+                            >
+                              <Edit3 className="w-3.5 h-3.5 text-[#66BB6A]" /> Edit & Correct Record
                             </button>
                             <button
                               onClick={() => verifyItem(v.id, true)}
@@ -333,6 +361,88 @@ export const DoctorPortal: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Doctor Edit & Correct Verification Item Modal */}
+      {editingVqItem && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border-2 border-[#1B5E20] animate-fade-in space-y-4">
+            <div className="flex justify-between items-start border-b border-[#C8E6C9] pb-3">
+              <div>
+                <h3 className="text-lg font-bold text-[#1B5E20] font-display flex items-center gap-2">
+                  <Edit3 className="w-5 h-5 text-[#66BB6A]" /> Edit & Correct Patient Claim
+                </h3>
+                <p className="text-xs text-[#38523C] mt-0.5">
+                  Refine patient-reported entry into an official verified clinical record
+                </p>
+              </div>
+              <button onClick={() => setEditingVqItem(null)} className="text-gray-400 hover:text-black font-bold text-xl">✕</button>
+            </div>
+
+            <form onSubmit={handleSaveCorrection} className="space-y-4">
+              <div className="p-3 rounded-xl bg-[#FEF3C7] border border-[#FDE68A] text-xs text-[#78350F]">
+                <strong className="block mb-0.5">Original Claim ({editingVqItem.source}):</strong>
+                <span>{editingVqItem.title} • {editingVqItem.details}</span>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#122415] mb-1">
+                  Corrected Title / Diagnosis
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Lactose Intolerance (Dairy Allergy) or Amoxicillin 500mg"
+                  value={modTitle}
+                  onChange={(e) => setModTitle(e.target.value)}
+                  className="w-full px-3 py-2 border-2 border-[#1B5E20] rounded-lg text-sm font-semibold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#122415] mb-1">
+                  Corrected Reaction / Dosage Details
+                </label>
+                <textarea
+                  rows={3}
+                  required
+                  placeholder="Enter detailed clinical findings or dosage..."
+                  value={modDetails}
+                  onChange={(e) => setModDetails(e.target.value)}
+                  className="w-full px-3 py-2 border border-[#C8E6C9] rounded-lg text-sm font-semibold"
+                ></textarea>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#122415] mb-1">
+                  Clinical Safety Severity Flag
+                </label>
+                <select
+                  value={modSeverity}
+                  onChange={(e: any) => setModSeverity(e.target.value)}
+                  className="w-full px-3 py-2 border border-[#C8E6C9] rounded-lg text-sm font-semibold"
+                >
+                  <option value="critical">🔴 Critical Flag (Triggers Red Alert Banner)</option>
+                  <option value="important">🟡 Important (Highlighted in Profile)</option>
+                  <option value="normal">🟢 Normal Clinical Fact</option>
+                </select>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-3 border-t border-[#C8E6C9]">
+                <button
+                  type="button"
+                  onClick={() => setEditingVqItem(null)}
+                  className="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-lg"
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary text-xs px-5">
+                  Save & Verify Corrected Record 🟢
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

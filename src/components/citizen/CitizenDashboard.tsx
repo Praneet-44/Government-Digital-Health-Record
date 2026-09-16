@@ -6,12 +6,14 @@ interface CitizenDashboardProps {
   onNavigateTab: (tab: string) => void;
   onOpenReportModal: () => void;
   onOpenAIIntake: () => void;
+  onOpenAIAwareness: () => void;
 }
 
 export const CitizenDashboard: React.FC<CitizenDashboardProps> = ({
   onNavigateTab,
   onOpenReportModal,
-  onOpenAIIntake
+  onOpenAIIntake,
+  onOpenAIAwareness
 }) => {
   const { patient, t } = useHealthRecord();
 
@@ -35,10 +37,16 @@ export const CitizenDashboard: React.FC<CitizenDashboardProps> = ({
 
         <div className="flex flex-wrap gap-2">
           <button
+            onClick={onOpenAIAwareness}
+            className="bg-[#123814] text-white border-2 border-[#66BB6A] font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-[#1B5E20] transition-all flex items-center gap-1.5 shadow"
+          >
+            <Bot className="w-4 h-4 text-[#66BB6A]" /> 💡 Public AI Awareness (Private)
+          </button>
+          <button
             onClick={onOpenAIIntake}
             className="bg-[#66BB6A] text-[#1B5E20] font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-[#54a858] transition-all flex items-center gap-1.5 shadow"
           >
-            <Bot className="w-4 h-4" /> {t('startAIIntake')}
+            <Bot className="w-4 h-4" /> 📋 OPD AI Doctor Intake
           </button>
           <button
             onClick={onOpenReportModal}

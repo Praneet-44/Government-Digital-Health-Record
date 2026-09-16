@@ -101,6 +101,7 @@ export interface VerificationItem {
 export interface CitizenProfile {
   abhaId: string;
   permanentId: string;
+  aadhaarNumber: string;
   fullName: string;
   dob: string;
   gender: 'Male' | 'Female' | 'Other';
@@ -122,3 +123,15 @@ export interface CitizenProfile {
   timeline: TimelineEvent[];
   consentLogs: ConsentLog[];
 }
+
+export interface DoctorStaff {
+  id: string;
+  fullName: string;
+  licenseNumber: string;
+  department: string;
+  facility: string;
+  username: string;
+  joinedDate: string;
+  status: 'active' | 'inactive';
+}
+

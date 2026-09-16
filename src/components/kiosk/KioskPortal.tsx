@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useHealthRecord } from '../../context/HealthRecordContext.tsx';
-import { Mic, Touchpad, FileText, Volume2, Globe, AlertTriangle, ArrowRight, CheckCircle2, ShieldCheck, HeartPulse } from 'lucide-react';
+import { Mic, Touchpad, FileText, Volume2, Globe, AlertTriangle, ArrowRight, CheckCircle2, ShieldCheck, HeartPulse, Sparkles, Lock } from 'lucide-react';
+import { AIHistoryIntakeModal } from '../citizen/AIHistoryIntakeModal.tsx';
 
 export const KioskPortal: React.FC = () => {
   const { language, setLanguage, triggerTriageRedFlag, t } = useHealthRecord();
   const [kioskStep, setKioskStep] = useState<'welcome' | 'speak' | 'upload' | 'triageAlert'>('welcome');
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [redFlagSubmitted, setRedFlagSubmitted] = useState(false);
+  const [showAwarenessModal, setShowAwarenessModal] = useState(false);
 
   const playVoicePrompt = () => {
     setAudioPlaying(true);
@@ -22,7 +24,7 @@ export const KioskPortal: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#E8F5E9] py-8">
-      <div className="container mx-auto px-4 max-w-4xl space-y-6">
+      <div className="container mx-auto px-4 max-w-5xl space-y-6">
         {/* Kiosk Header */}
         <div className="bg-[#1B5E20] text-white rounded-3xl p-6 shadow-xl text-center space-y-3">
           <div className="inline-flex items-center gap-2 bg-[#27702C] text-[#A5D6A7] text-xs font-bold px-3 py-1 rounded-full border border-[#388E3C]">
@@ -72,41 +74,73 @@ export const KioskPortal: React.FC = () => {
           <div className="bg-white rounded-3xl p-8 border-2 border-[#C8E6C9] shadow-xl space-y-6 text-center">
             <h3 className="text-2xl font-bold text-[#1B5E20] font-display">{t('kioskSubtitle')}</h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Option 1: Speak Symptoms */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Option 1: Public AI Health Awareness Mode */}
+              <button
+                onClick={() => setShowAwarenessModal(true)}
+                className="p-5 rounded-2xl bg-[#E8F5E9] border-2 border-[#66BB6A] hover:border-[#1B5E20] hover:scale-[1.02] transition-all flex flex-col items-center text-center space-y-3 group min-h-[220px] justify-between shadow-md"
+              >
+                <div className="w-14 h-14 rounded-2xl bg-[#1B5E20] text-white flex items-center justify-center shadow-lg group-hover:bg-[#66BB6A] group-hover:text-[#1B5E20]">
+                  <Sparkles className="w-7 h-7 text-[#66BB6A] group-hover:text-[#1B5E20]" />
+                </div>
+                <div>
+                  <h4 className="text-base font-extrabold text-[#1B5E20]">💡 Public Health AI</h4>
+                  <p className="text-[11px] text-[#2E7D32] mt-1 font-medium">Self-Awareness & Symptom Advice</p>
+                </div>
+                <span className="text-[10px] font-bold bg-[#1B5E20] text-white px-2.5 py-1 rounded-full border border-[#4CAF50] flex items-center gap-1">
+                  <Lock className="w-3 h-3 text-[#66BB6A]" /> Private (Not Sent to Doctor)
+                </span>
+              </button>
+
+              {/* Option 2: OPD Clinical Intake */}
               <button
                 onClick={() => setKioskStep('speak')}
-                className="p-6 rounded-2xl bg-[#E8F5E9] border-2 border-[#A5D6A7] hover:border-[#1B5E20] hover:scale-[1.02] transition-all flex flex-col items-center text-center space-y-3 group min-h-[220px] justify-center"
+                className="p-5 rounded-2xl bg-[#E8F5E9] border-2 border-[#A5D6A7] hover:border-[#1B5E20] hover:scale-[1.02] transition-all flex flex-col items-center text-center space-y-3 group min-h-[220px] justify-between"
               >
-                <div className="w-16 h-16 rounded-2xl bg-[#1B5E20] text-white flex items-center justify-center shadow-lg group-hover:bg-[#66BB6A] group-hover:text-[#1B5E20]">
-                  <Mic className="w-8 h-8" />
+                <div className="w-14 h-14 rounded-2xl bg-[#1B5E20] text-white flex items-center justify-center shadow-lg group-hover:bg-[#66BB6A] group-hover:text-[#1B5E20]">
+                  <Mic className="w-7 h-7" />
                 </div>
-                <h4 className="text-xl font-bold text-[#1B5E20]">🎤 {t('aiVoiceAssistant')}</h4>
-                <p className="text-xs text-[#38523C]">{t('speakLanguage')}</p>
+                <div>
+                  <h4 className="text-base font-extrabold text-[#1B5E20]">🎤 OPD AI Intake</h4>
+                  <p className="text-[11px] text-[#38523C] mt-1">{t('speakLanguage')}</p>
+                </div>
+                <span className="text-[10px] font-bold bg-[#EFF6FF] text-[#1D4ED8] px-2.5 py-1 rounded-full border border-[#BFDBFE]">
+                  📋 Submits to Doctor Queue
+                </span>
               </button>
 
-              {/* Option 2: Tap Touch Screen */}
+              {/* Option 3: Tap Touch Screen */}
               <button
                 onClick={() => setKioskStep('triageAlert')}
-                className="p-6 rounded-2xl bg-[#E8F5E9] border-2 border-[#A5D6A7] hover:border-[#1B5E20] hover:scale-[1.02] transition-all flex flex-col items-center text-center space-y-3 group min-h-[220px] justify-center"
+                className="p-5 rounded-2xl bg-[#E8F5E9] border-2 border-[#A5D6A7] hover:border-[#1B5E20] hover:scale-[1.02] transition-all flex flex-col items-center text-center space-y-3 group min-h-[220px] justify-between"
               >
-                <div className="w-16 h-16 rounded-2xl bg-[#1B5E20] text-white flex items-center justify-center shadow-lg group-hover:bg-[#66BB6A] group-hover:text-[#1B5E20]">
-                  <Touchpad className="w-8 h-8" />
+                <div className="w-14 h-14 rounded-2xl bg-[#1B5E20] text-white flex items-center justify-center shadow-lg group-hover:bg-[#66BB6A] group-hover:text-[#1B5E20]">
+                  <Touchpad className="w-7 h-7" />
                 </div>
-                <h4 className="text-xl font-bold text-[#1B5E20]">👆 {t('quickSymptoms')}</h4>
-                <p className="text-xs text-[#38523C]">{t('kioskSubtitle')}</p>
+                <div>
+                  <h4 className="text-base font-extrabold text-[#1B5E20]">👆 Quick Symptoms</h4>
+                  <p className="text-[11px] text-[#38523C] mt-1">Touch Screen Triage</p>
+                </div>
+                <span className="text-[10px] font-bold bg-white text-[#38523C] px-2.5 py-1 rounded-full border border-[#C8E6C9]">
+                  OPD Triage Options
+                </span>
               </button>
 
-              {/* Option 3: Upload Report */}
+              {/* Option 4: Upload Report */}
               <button
                 onClick={() => setKioskStep('upload')}
-                className="p-6 rounded-2xl bg-[#E8F5E9] border-2 border-[#A5D6A7] hover:border-[#1B5E20] hover:scale-[1.02] transition-all flex flex-col items-center text-center space-y-3 group min-h-[220px] justify-center"
+                className="p-5 rounded-2xl bg-[#E8F5E9] border-2 border-[#A5D6A7] hover:border-[#1B5E20] hover:scale-[1.02] transition-all flex flex-col items-center text-center space-y-3 group min-h-[220px] justify-between"
               >
-                <div className="w-16 h-16 rounded-2xl bg-[#1B5E20] text-white flex items-center justify-center shadow-lg group-hover:bg-[#66BB6A] group-hover:text-[#1B5E20]">
-                  <FileText className="w-8 h-8" />
+                <div className="w-14 h-14 rounded-2xl bg-[#1B5E20] text-white flex items-center justify-center shadow-lg group-hover:bg-[#66BB6A] group-hover:text-[#1B5E20]">
+                  <FileText className="w-7 h-7" />
                 </div>
-                <h4 className="text-xl font-bold text-[#1B5E20]">📄 {t('uploadDocOCR')}</h4>
-                <p className="text-xs text-[#38523C]">{t('scanDesc')}</p>
+                <div>
+                  <h4 className="text-base font-extrabold text-[#1B5E20]">📄 Upload Document</h4>
+                  <p className="text-[11px] text-[#38523C] mt-1">{t('scanDesc')}</p>
+                </div>
+                <span className="text-[10px] font-bold bg-[#EFF6FF] text-[#1D4ED8] px-2.5 py-1 rounded-full border border-[#BFDBFE]">
+                  AI OCR Processing
+                </span>
               </button>
             </div>
           </div>
@@ -124,9 +158,9 @@ export const KioskPortal: React.FC = () => {
               <p className="text-sm text-[#38523C] mt-1">{t('speakLanguage')}</p>
             </div>
 
-            <div className="bg-[#E8F5E9] p-4 rounded-xl border border-[#C8E6C9] max-w-md mx-auto text-left">
-              <span className="text-[10px] font-extrabold text-[#1B5E20] uppercase block">AI Recognized Text:</span>
-              <p className="text-sm font-semibold text-[#122415] mt-1">"Severe right lower abdomen pain starting yesterday night."</p>
+            <div className="bg-[#EFF6FF] p-4 rounded-xl border border-[#BFDBFE] max-w-md mx-auto text-left">
+              <span className="text-[10px] font-extrabold text-[#1D4ED8] uppercase block">OPD Clinical Intake AI Recognized Text:</span>
+              <p className="text-sm font-semibold text-[#1E3A8A] mt-1">"Severe right lower abdomen pain starting yesterday night."</p>
             </div>
 
             <div className="flex justify-center gap-4 pt-4">
@@ -225,6 +259,14 @@ export const KioskPortal: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Public AI Health Awareness Modal */}
+      {showAwarenessModal && (
+        <AIHistoryIntakeModal
+          onClose={() => setShowAwarenessModal(false)}
+          initialMode="awareness"
+        />
+      )}
     </div>
   );
 };

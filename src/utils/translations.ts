@@ -625,6 +625,48 @@ export const translations: Record<string, Record<SupportedLanguage, string>> = {
     English: 'OCR Documents Processed',
     Hindi: 'ओसीआर दस्तावेज़ संसाधित',
     Tamil: 'செயலாக்கப்பட்ட OCR ஆவணங்கள்'
+  },
+
+  // AI Separate Modes
+  publicAiAwarenessTitle: {
+    English: 'Public AI Health Awareness Assistant',
+    Hindi: 'सार्वजनिक एआई स्वास्थ्य जागरूकता सहायक',
+    Tamil: 'பொது AI சுகாதார விழிப்புணர்வு உதவியாளர்'
+  },
+  publicAiAwarenessDesc: {
+    English: 'Ask questions & understand symptoms for self-awareness. Private & NOT sent to doctor.',
+    Hindi: 'स्वयं की जागरूकता के लिए प्रश्न पूछें और लक्षणों को समझें। व्यक्तिगत और डॉक्टर को नहीं भेजा जाता।',
+    Tamil: 'சுய விழிப்புணர்வுக்கு கேள்விகளைக் கேட்டு அறிகுறிகளைப் புரிந்துகொள்ளுங்கள். தனிப்பட்டது, மருத்துவருக்கு அனுப்பப்படாது.'
+  },
+  opdDoctorIntakeTitle: {
+    English: 'OPD Clinical Doctor Intake',
+    Hindi: 'ओपीडी क्लिनिकल डॉक्टर इनटेक',
+    Tamil: 'OPD மருத்துவ சேர்க்கை'
+  },
+  opdDoctorIntakeDesc: {
+    English: 'Prepares structured history for OPD consultation and sends alerts to Doctor Queue.',
+    Hindi: 'ओपीडी परामर्श के लिए संरचित इतिहास तैयार करता है और डॉक्टर कतार में अलर्ट भेजता है।',
+    Tamil: 'OPD ஆலோசனைக்கான தகவல்களைத் தயாரித்து மருத்துவருக்கு அனுப்புகிறது.'
+  },
+  awarenessModeBadge: {
+    English: '🛡️ Public Health Awareness Mode (Private • Not Sent to Doctor)',
+    Hindi: '🛡️ सार्वजनिक स्वास्थ्य जागरूकता मोड (व्यक्तिगत • डॉक्टर को नहीं भेजा गया)',
+    Tamil: '🛡️ பொது சுகாதார விழிப்புணர்வு பயன்முறை (தனிப்பட்டது • மருத்துவருக்கு அனுப்பப்படாது)'
+  },
+  doctorIntakeModeBadge: {
+    English: '📋 OPD Clinical Intake Mode (Submits History to Doctor Queue)',
+    Hindi: '📋 ओपीडी क्लिनिकल इनटेक मोड (डॉक्टर कतार में इतिहास प्रस्तुत करता है)',
+    Tamil: '📋 OPD மருத்துவ சேர்க்கை பயன்முறை (மருத்துவருக்கு தகவல்களை அனுப்புகிறது)'
+  },
+  awarenessCompletedNotice: {
+    English: 'Interaction Complete. This response was strictly for your health awareness. NOTHING was sent to the doctor or saved to records.',
+    Hindi: 'बातचीत पूरी हुई। यह उत्तर केवल आपकी स्वास्थ्य जागरूकता के लिए था। डॉक्टर को कुछ भी नहीं भेजा गया है।',
+    Tamil: 'செயல்பாடு நிறைவடைந்தது. இந்த பதில் உங்கள் விழிப்புணர்விற்கு மட்டுமே. மருத்துவருக்கு எதுவும் அனுப்பப்படவில்லை.'
+  },
+  publicAiHeroBtn: {
+    English: 'Try Public AI Health Awareness',
+    Hindi: 'सार्वजनिक एआई स्वास्थ्य जागरूकता का प्रयास करें',
+    Tamil: 'பொது AI சுகாதார விழிப்புணர்வை முயற்சிக்கவும்'
   }
 };
 
