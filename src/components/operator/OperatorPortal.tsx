@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useHealthRecord } from '../../context/HealthRecordContext.tsx';
-import { UserPlus, Search, ShieldCheck, CheckCircle2, User, Phone, MapPin, Calendar, HeartPulse, KeyRound, Lock, Info } from 'lucide-react';
+import { UserPlus, Search, ShieldCheck, CheckCircle2, KeyRound, Info } from 'lucide-react';
 
 export const OperatorPortal: React.FC = () => {
-  const { patient, allPatients, registerNewCitizen, setRole, t } = useHealthRecord();
+  const { allPatients, registerNewCitizen, setRole } = useHealthRecord();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResult, setSearchResult] = useState<any>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);

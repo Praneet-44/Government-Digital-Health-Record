@@ -165,7 +165,7 @@ export const LandingPage: React.FC = () => {
               <div>
                 <div className="flex justify-between items-start mb-4">
                   <div className="p-3.5 rounded-2xl bg-[#E8F5E9] border border-[#C8E6C9] group-hover:bg-[#1B5E20] transition-colors">
-                    {React.cloneElement(p.icon as React.ReactElement, { className: 'w-7 h-7 text-[#1B5E20] group-hover:text-white transition-colors' })}
+                    {React.cloneElement(p.icon as React.ReactElement<{ className?: string }>, { className: 'w-7 h-7 text-[#1B5E20] group-hover:text-white transition-colors' })}
                   </div>
                   <span className="text-[11px] font-extrabold bg-[#E8F5E9] text-[#1B5E20] px-3 py-1 rounded-full border border-[#A5D6A7]">
                     {p.badge}
@@ -187,51 +187,7 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Medical Safety Architecture Protocol */}
-      <section className="bg-white py-16 px-4 border-t-2 border-b-2 border-[#C8E6C9]">
-        <div className="container mx-auto max-w-5xl">
-          <div className="text-center mb-12">
-            <span className="text-xs font-extrabold uppercase tracking-widest text-[#1B5E20] bg-[#E8F5E9] px-4 py-1.5 rounded-full border border-[#A5D6A7]">
-              {t('safetySubtitle')}
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#1B5E20] mt-3 font-display">
-              {t('safetyTitle')}
-            </h2>
-            <p className="text-sm text-[#38523C] max-w-2xl mx-auto mt-2">
-              MediKiosk enforces a clear visual hierarchy to ensure unverified patient inputs never compromise clinical treatment safety.
-            </p>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="p-6 rounded-3xl bg-[#FEF3C7] border-2 border-[#FDE68A] shadow-sm">
-              <div className="flex items-center gap-2 text-[#B45309] font-extrabold text-base mb-2">
-                <span className="text-xl">🟡</span> {t('patientReportedTitle')}
-              </div>
-              <p className="text-xs text-[#78350F] leading-relaxed">
-                {t('patientReportedDesc')}
-              </p>
-            </div>
-
-            <div className="p-6 rounded-3xl bg-[#EFF6FF] border-2 border-[#BFDBFE] shadow-sm">
-              <div className="flex items-center gap-2 text-[#1D4ED8] font-extrabold text-base mb-2">
-                <span className="text-xl">🔵</span> {t('ocrTitle')}
-              </div>
-              <p className="text-xs text-[#1E40AF] leading-relaxed">
-                {t('ocrDesc')}
-              </p>
-            </div>
-
-            <div className="p-6 rounded-3xl bg-[#E8F5E9] border-2 border-[#A5D6A7] shadow-sm">
-              <div className="flex items-center gap-2 text-[#1B5E20] font-extrabold text-base mb-2">
-                <span className="text-xl">🟢</span> {t('verifiedTitle')}
-              </div>
-              <p className="text-xs text-[#144517] leading-relaxed">
-                {t('verifiedDesc')}
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Footer */}
       <footer className="bg-[#071F09] text-[#A5D6A7] py-10 text-xs text-center border-t-2 border-[#1E5723]">
@@ -245,7 +201,6 @@ export const LandingPage: React.FC = () => {
       {showPublicAiModal && (
         <AIHistoryIntakeModal
           onClose={() => setShowPublicAiModal(false)}
-          initialMode="awareness"
         />
       )}
     </div>

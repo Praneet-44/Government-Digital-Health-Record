@@ -5,10 +5,7 @@ import type {
   VerificationItem,
   Allergy,
   Medication,
-  Operation,
   DocumentItem,
-  TimelineEvent,
-  ConsentLog,
   DoctorStaff
 } from '../types/health.ts';
 
@@ -30,7 +27,23 @@ interface HealthRecordContextType {
   reportChange: (type: 'allergy' | 'medication' | 'operation' | 'condition', title: string, details: string) => void;
   verifyItem: (id: string, approve: boolean, doctorNotes?: string) => void;
   modifyAndVerifyItem: (id: string, updatedTitle: string, updatedDetails: string, severity?: 'critical' | 'important' | 'normal') => void;
-  uploadDocument: (title: string, category: any) => void;
+  uploadDocument: (
+    title: string,
+    category: any,
+    extraData?: {
+      imageUrl?: string;
+      detectedDocumentType?: 'handwritten_prescription' | 'printed_lab_report' | 'hybrid_clinical_note';
+      printedText?: string;
+      handwrittenNotesText?: string;
+      medication?: string;
+      dosage?: string;
+      doctor?: string;
+      hospital?: string;
+      diagnosis?: string;
+      handwritingConfidence?: number;
+      printedConfidence?: number;
+    }
+  ) => void;
   addDoctorNote: (type: 'medication' | 'allergy' | 'condition', name: string, detail: string) => void;
   updateVitalsAndContact: (height: string, weight: string, emergencyContact: { name: string; relation: string; mobile: string }) => void;
   registerNewCitizen: (name: string, mobile: string, dob: string, gender: 'Male' | 'Female' | 'Other', bloodGroup: string, aadhaarNumber: string) => { profile: CitizenProfile; isExisting: boolean };
@@ -143,11 +156,11 @@ export const HealthRecordProvider: React.FC<{ children: React.ReactNode }> = ({ 
       prev.map(item =>
         item.id === id
           ? {
-              ...item,
-              status: 'verified',
-              title: `Doctor Corrected: ${updatedTitle}`,
-              details: `Doctor Note: ${updatedDetails}`
-            }
+            ...item,
+            status: 'verified',
+            title: `Doctor Corrected: ${updatedTitle}`,
+            details: `Doctor Note: ${updatedDetails}`
+          }
           : item
       )
     );
@@ -386,20 +399,46 @@ export const HealthRecordProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   };
 
-  const uploadDocument = (title: string, category: any) => {
+  const uploadDocument = (
+    title: string,
+    category: any,
+    extraData?: {
+      imageUrl?: string;
+      detectedDocumentType?: 'handwritten_prescription' | 'printed_lab_report' | 'hybrid_clinical_note';
+      printedText?: string;
+      handwrittenNotesText?: string;
+      medication?: string;
+      dosage?: string;
+      doctor?: string;
+      hospital?: string;
+      diagnosis?: string;
+      handwritingConfidence?: number;
+      printedConfidence?: number;
+    }
+  ) => {
     const newDoc: DocumentItem = {
       id: `doc-${Date.now()}`,
       title,
       category,
       uploadDate: 'Today',
-      facility: 'Kiosk OCR Upload',
-      fileSize: '1.8 MB',
+      facility: extraData?.hospital || 'OPD AI Image Vision Scanner',
+      fileSize: '2.4 MB',
       clinicalStatus: 'imported',
+      imageUrl: extraData?.imageUrl,
+      detectedDocumentType: extraData?.detectedDocumentType || 'hybrid_clinical_note',
+      ocrEngine: 'Vision Neural OCR (Printed + Handwriting)',
+      handwritingConfidence: extraData?.handwritingConfidence || 94,
+      printedConfidence: extraData?.printedConfidence || 99,
+      handwrittenNotesText: extraData?.handwrittenNotesText || 'Rx: Amoxicillin 500mg TDS x 5 days (Handwritten)',
+      printedText: extraData?.printedText || 'District Govt Hospital OPD • Patient ID: GOV-IND-2026-88412',
       extractedData: {
-        medication: 'Paracetamol 650mg',
-        doctor: 'AI OCR Extracted',
-        hospital: 'OPD Scanner',
-        date: 'Today'
+        medication: extraData?.medication || 'Amoxicillin 500mg (TDS)',
+        dosage: extraData?.dosage || '1 Tablet Three Times Daily after meals',
+        doctor: extraData?.doctor || 'Dr. R. K. Sharma (MD)',
+        hospital: extraData?.hospital || 'District Hospital OPD',
+        date: 'Today',
+        diagnosis: extraData?.diagnosis || 'Acute Upper Respiratory Symptoms',
+        handwrittenInstructions: extraData?.handwrittenNotesText || 'Take with plenty of warm water. Review in 5 days.'
       }
     };
 
@@ -412,9 +451,9 @@ export const HealthRecordProvider: React.FC<{ children: React.ReactNode }> = ({ 
           date: 'Today',
           title: `Document Uploaded: ${title}`,
           category: 'prescription',
-          facility: 'Kiosk Scanner',
+          facility: extraData?.hospital || 'AI Image Processing Scanner',
           clinicalStatus: 'imported',
-          summary: 'Document uploaded and processed by AI OCR extractor.'
+          summary: `Document processed by Vision AI Engine. Extracted Printed Text & Handwritten Doctor Notes (${newDoc.handwritingConfidence}% Confidence).`
         },
         ...prev.timeline
       ]
@@ -426,11 +465,12 @@ export const HealthRecordProvider: React.FC<{ children: React.ReactNode }> = ({ 
       patientId: patient.permanentId,
       patientName: patient.fullName,
       type: 'medication',
-      title: `AI OCR Scanned: ${title}`,
-      details: 'Extracted Paracetamol 650mg from uploaded document',
-      source: 'AI OCR Scan',
+      title: `AI Image Vision Scanned: ${title}`,
+      details: `Extracted: ${newDoc.extractedData?.medication} (Printed & Handwritten OCR) • Notes: ${newDoc.handwrittenNotesText}`,
+      source: 'AI Image Vision Processor',
       reportedDate: 'Today',
-      status: 'pending'
+      status: 'pending',
+      handwrittenExtractionNote: newDoc.handwrittenNotesText
     };
 
     setVerificationQueue(prev => [newVqItem, ...prev]);
@@ -438,7 +478,7 @@ export const HealthRecordProvider: React.FC<{ children: React.ReactNode }> = ({ 
     // Also update allPatients list so global doc counters update dynamically
     setAllPatients(prev => prev.map(p => p.permanentId === patient.permanentId ? { ...p, documents: [newDoc, ...p.documents] } : p));
 
-    triggerNotify(`🔵 Document uploaded! Total System OCR Docs updated.`);
+    triggerNotify(`📸 Image Processed! Printed text & handwritten notes extracted to Doctor Queue.`);
   };
 
   const addDoctorNote = (type: 'medication' | 'allergy' | 'condition', name: string, detail: string) => {

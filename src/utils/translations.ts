@@ -667,6 +667,28 @@ export const translations: Record<string, Record<SupportedLanguage, string>> = {
     English: 'Try Public AI Health Awareness',
     Hindi: 'सार्वजनिक एआई स्वास्थ्य जागरूकता का प्रयास करें',
     Tamil: 'பொது AI சுகாதார விழிப்புணர்வை முயற்சிக்கவும்'
+  },
+
+  // Image Processing & Handwriting OCR
+  imageVisionProcessingTitle: {
+    English: 'AI Vision & Handwriting Image Processor',
+    Hindi: 'एआई विज़न और हस्तलेख छवि प्रोसेसर',
+    Tamil: 'AI விஷன் & கையெழுத்து பட செயலி'
+  },
+  handwritingDetected: {
+    English: 'Handwritten Notes & Prescription Recognized',
+    Hindi: 'हस्तलिखित नोट्स और नुस्खे पहचाने गए',
+    Tamil: 'கையெழுத்து குறிப்புகள் & மருந்துச் சீட்டு அடையாளம் காணப்பட்டது'
+  },
+  printedTextDetected: {
+    English: 'Printed Hospital Header & Diagnostics Extracted',
+    Hindi: 'मुद्रित अस्पताल हेडर और डायग्नोस्टिक्स निकाले गए',
+    Tamil: 'அச்சிடப்பட்ட மருத்துவமனை தலைப்பு & சோதனைகள் பெறப்பட்டது'
+  },
+  analyzeImageInChat: {
+    English: 'Upload Prescription / Image for AI Analysis',
+    Hindi: 'एआई विश्लेषण के लिए पर्ची / छवि अपलोड करें',
+    Tamil: 'AI ஆய்வுக்கு மருந்து சீட்டு / படத்தை பதிவேற்றவும்'
   }
 };
 

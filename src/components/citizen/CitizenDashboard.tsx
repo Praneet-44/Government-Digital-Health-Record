@@ -1,6 +1,6 @@
 import React from 'react';
 import { useHealthRecord } from '../../context/HealthRecordContext';
-import { AlertOctagon, Pill, Activity, FileText, Calendar, ShieldCheck, ArrowRight, Upload, Bot, PlusCircle } from 'lucide-react';
+import { AlertOctagon, Pill, Activity, FileText, Calendar, ShieldCheck, ArrowRight, Bot, PlusCircle } from 'lucide-react';
 
 interface CitizenDashboardProps {
   onNavigateTab: (tab: string) => void;
@@ -40,19 +40,13 @@ export const CitizenDashboard: React.FC<CitizenDashboardProps> = ({
             onClick={onOpenAIAwareness}
             className="bg-[#123814] text-white border-2 border-[#66BB6A] font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-[#1B5E20] transition-all flex items-center gap-1.5 shadow"
           >
-            <Bot className="w-4 h-4 text-[#66BB6A]" /> 💡 Public AI Awareness (Private)
-          </button>
-          <button
-            onClick={onOpenAIIntake}
-            className="bg-[#66BB6A] text-[#1B5E20] font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-[#54a858] transition-all flex items-center gap-1.5 shadow"
-          >
-            <Bot className="w-4 h-4" /> 📋 OPD AI Doctor Intake
+            <Bot className="w-4 h-4 text-[#66BB6A]" /> 💡 Public AI Health & Vision Assistant
           </button>
           <button
             onClick={onOpenReportModal}
-            className="bg-[#123814] text-white border border-[#27702C] font-semibold text-xs px-4 py-2.5 rounded-xl hover:bg-[#1B5E20] transition-all flex items-center gap-1.5"
+            className="bg-[#66BB6A] text-[#1B5E20] font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-[#54a858] transition-all flex items-center gap-1.5 shadow"
           >
-            <PlusCircle className="w-4 h-4 text-[#66BB6A]" /> {t('reportNewItem')}
+            <PlusCircle className="w-4 h-4 text-[#1B5E20]" /> {t('reportNewItem')}
           </button>
         </div>
       </div>
@@ -207,11 +201,11 @@ export const CitizenDashboard: React.FC<CitizenDashboardProps> = ({
           </button>
 
           <button
-            onClick={onOpenAIIntake}
+            onClick={onOpenAIAwareness}
             className="p-4 rounded-xl border-2 border-[#66BB6A] bg-[#1B5E20] text-white hover:bg-[#144517] transition-all text-left flex flex-col justify-between"
           >
-            <div className="font-bold text-sm mb-1 text-[#66BB6A]">🤖 AI Voice Intake</div>
-            <span className="text-[11px] text-[#A5D6A7]">Smart Symptom Assistant</span>
+            <div className="font-bold text-sm mb-1 text-[#66BB6A]">💡 Public Health AI</div>
+            <span className="text-[11px] text-[#A5D6A7]">Self-Awareness & Vision OCR</span>
           </button>
         </div>
       </div>

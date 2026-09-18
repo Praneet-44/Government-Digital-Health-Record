@@ -1,6 +1,6 @@
 import React from 'react';
 import { useHealthRecord } from '../../context/HealthRecordContext';
-import { Pill, CheckCircle2, Clock, PlusCircle, History } from 'lucide-react';
+import { Pill, CheckCircle2, PlusCircle, History } from 'lucide-react';
 
 interface MedicationsViewProps {
   onOpenReportModal: () => void;

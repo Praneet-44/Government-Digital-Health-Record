@@ -1,6 +1,6 @@
 import React from 'react';
 import { useHealthRecord } from '../../context/HealthRecordContext';
-import { Calendar, Stethoscope, Activity, FileText, Building2 } from 'lucide-react';
+import { Calendar, Building2 } from 'lucide-react';
 
 export const HealthTimelineView: React.FC = () => {
   const { patient } = useHealthRecord();

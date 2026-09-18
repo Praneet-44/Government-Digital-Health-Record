@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useHealthRecord } from '../../context/HealthRecordContext.tsx';
-import { Building2, ShieldCheck, Clock, AlertTriangle, Users, FileText, CheckCircle2, UserPlus, Stethoscope, KeyRound, Lock, UserCheck } from 'lucide-react';
+import { Building2, ShieldCheck, UserPlus, Stethoscope, KeyRound, UserCheck } from 'lucide-react';
 
 export const AdminPortal: React.FC = () => {
-  const { allPatients, verificationQueue, triageRedFlagsCount, doctorsList, onboardNewDoctor, t } = useHealthRecord();
+  const { allPatients, verificationQueue, triageRedFlagsCount, doctorsList, onboardNewDoctor } = useHealthRecord();
   const [showAddDoctorModal, setShowAddDoctorModal] = useState(false);
 
   // New Doctor Onboarding Form State
@@ -15,7 +15,6 @@ export const AdminPortal: React.FC = () => {
   const [docPassword, setDocPassword] = useState('DocPass@2026');
 
   const totalRecords = allPatients.length;
-  const totalDigitizedDocs = allPatients.reduce((acc, p) => acc + p.documents.length, 0);
   const pendingVerifications = verificationQueue.filter(v => v.status === 'pending').length;
 
   const handleOpenModal = () => {

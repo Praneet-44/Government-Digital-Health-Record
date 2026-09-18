@@ -1,6 +1,6 @@
 import React from 'react';
 import { useHealthRecord } from '../../context/HealthRecordContext';
-import { AlertOctagon, CheckCircle2, Clock, PlusCircle, ShieldAlert } from 'lucide-react';
+import { AlertOctagon, CheckCircle2, Clock, PlusCircle } from 'lucide-react';
 
 interface AllergiesViewProps {
   onOpenReportModal: () => void;

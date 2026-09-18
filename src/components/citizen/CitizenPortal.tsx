@@ -9,7 +9,7 @@ import { HealthTimelineView } from './HealthTimelineView.tsx';
 import { ReportChangeModal } from './ReportChangeModal.tsx';
 import { AIHistoryIntakeModal } from './AIHistoryIntakeModal.tsx';
 import type { AIMode } from './AIHistoryIntakeModal.tsx';
-import { LayoutDashboard, User, AlertOctagon, Pill, Activity, FileText, Calendar, Lock, PlusCircle, Bot, Edit3, PhoneCall, Scale } from 'lucide-react';
+import { LayoutDashboard, User, AlertOctagon, Pill, Activity, FileText, Calendar, Lock, Edit3, PhoneCall, Scale } from 'lucide-react';
 
 export const CitizenPortal: React.FC = () => {
   const { activeTab, setActiveTab, patient, updateVitalsAndContact, t } = useHealthRecord();

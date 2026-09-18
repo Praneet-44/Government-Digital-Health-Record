@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
-import { useHealthRecord } from '../../context/HealthRecordContext';
-import { Stethoscope, CheckCircle2, XCircle, AlertOctagon, Bot, Pill, Activity, FileText, PlusCircle, ShieldAlert, Check, X, Sparkles, Edit3, ShieldCheck } from 'lucide-react';
-import type { VerificationItem } from '../../types/health';
+import { useHealthRecord } from '../../context/HealthRecordContext.tsx';
+import { Stethoscope, Search, UserCheck, AlertOctagon, PlusCircle, Check, X, Edit3, FileText, Sparkles, Phone, ShieldCheck } from 'lucide-react';
+import type { CitizenProfile, VerificationItem } from '../../types/health.ts';
 
 export const DoctorPortal: React.FC = () => {
-  const { patient, verificationQueue, verifyItem, modifyAndVerifyItem, addDoctorNote, t } = useHealthRecord();
-  const [activeDoctorTab, setActiveDoctorTab] = useState<'overview' | 'verification' | 'notes'>('overview');
+  const { patient, allPatients, setPatient, verificationQueue, verifyItem, modifyAndVerifyItem, addDoctorNote, t } = useHealthRecord();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchError, setSearchError] = useState('');
+
+  const [activeDoctorTab, setActiveDoctorTab] = useState<'overview' | 'documents' | 'verification' | 'notes'>('overview');
   const [newNoteType, setNewNoteType] = useState<'medication' | 'allergy'>('medication');
   const [newNoteName, setNewNoteName] = useState('');
   const [newNoteDetail, setNewNoteDetail] = useState('');
@@ -18,6 +21,37 @@ export const DoctorPortal: React.FC = () => {
 
   const pendingVerificationItems = verificationQueue.filter(v => v.status === 'pending');
 
+  const handleSearchCitizen = (e?: React.FormEvent, customId?: string) => {
+    if (e) e.preventDefault();
+    const query = (customId || searchQuery).trim().toLowerCase();
+    if (!query) return;
+
+    const cleanQuery = query.replace(/\D/g, '');
+
+    const match = allPatients.find(p => {
+      const cleanPerm = p.permanentId.toLowerCase().replace(/\D/g, '');
+      const cleanAadhaar = (p.aadhaarNumber || '').replace(/\D/g, '');
+      const cleanAbha = (p.abhaId || '').replace(/\D/g, '');
+      const cleanMobile = (p.mobile || '').replace(/\D/g, '');
+      return (
+        p.permanentId.toLowerCase().includes(query) ||
+        p.mobile.toLowerCase().includes(query) ||
+        (cleanQuery && cleanQuery.length >= 3 && cleanPerm.includes(cleanQuery)) ||
+        (cleanQuery && cleanQuery.length >= 3 && cleanAadhaar.includes(cleanQuery)) ||
+        (cleanQuery && cleanQuery.length >= 3 && cleanAbha.includes(cleanQuery)) ||
+        (cleanQuery && cleanQuery.length >= 3 && cleanMobile.includes(cleanQuery)) ||
+        p.fullName.toLowerCase().includes(query)
+      );
+    });
+
+    if (match) {
+      setPatient(match);
+      setSearchError('');
+    } else {
+      setSearchError(`No citizen record found matching "${query}". Search by 12-digit Health ID (e.g. GOV-IND-2026-88412), Phone (+91 98765 43210), or Aadhaar.`);
+    }
+  };
+
   const handleAddDoctorNote = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newNoteName) return;
@@ -28,7 +62,7 @@ export const DoctorPortal: React.FC = () => {
 
   const handleOpenEditModal = (item: VerificationItem) => {
     setEditingVqItem(item);
-    const cleanTitle = item.title.replace('Patient Reported:', '').replace('AI OCR Scanned:', '').trim();
+    const cleanTitle = item.title.replace('Patient Reported:', '').replace('AI OCR Scanned:', '').replace('AI Image Vision Scanned:', '').trim();
     setModTitle(cleanTitle);
     setModDetails(item.details);
     setModSeverity(cleanTitle.toLowerCase().includes('penicillin') || cleanTitle.toLowerCase().includes('allergy') ? 'critical' : 'important');
@@ -58,142 +92,169 @@ export const DoctorPortal: React.FC = () => {
 
           <div className="flex items-center gap-3">
             <div className="bg-[#123814] px-4 py-2 rounded-xl border border-[#27702C] text-center">
-              <span className="text-[10px] text-[#A5D6A7] block font-semibold uppercase">{t('pendingVerification')}</span>
-              <span className="text-xl font-extrabold text-[#FDE68A]">{pendingVerificationItems.length} Items</span>
+              <span className="text-[10px] text-[#A5D6A7] block font-semibold uppercase">Verification Review</span>
+              <span className="text-xl font-extrabold text-[#FDE68A]">{pendingVerificationItems.length} Records</span>
             </div>
           </div>
         </div>
 
-        {/* Doctor Main Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* OPD Queue Sidebar */}
-          <div className="space-y-4">
-            <div className="bg-white rounded-2xl p-4 border border-[#C8E6C9]">
-              <h3 className="text-sm font-bold text-[#1B5E20] mb-3 uppercase tracking-wider flex items-center justify-between">
-                <span>{t('todaysQueue')}</span>
-                <span className="bg-[#E8F5E9] text-[#1B5E20] text-[10px] px-2 py-0.5 rounded-full font-bold">3 Tokens</span>
+        {/* 12-Digit Permanent Health ID Direct Search Bar */}
+        <div className="bg-white p-6 rounded-2xl border-2 border-[#1B5E20] shadow-lg space-y-3">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <div>
+              <h3 className="text-lg font-extrabold text-[#1B5E20] font-display flex items-center gap-2">
+                <Search className="w-5 h-5 text-[#2E7D32]" /> Search Patient by 12-Digit Health ID, Phone Number or Aadhaar
               </h3>
-
-              <div className="space-y-2">
-                {/* Active Patient Card */}
-                <div className="p-3.5 rounded-xl bg-[#E8F5E9] border-2 border-[#1B5E20] shadow-sm">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="font-extrabold text-[#1B5E20] text-xs bg-[#66BB6A] text-[#1B5E20] px-2 py-0.5 rounded">
-                      Token 101
-                    </span>
-                    <span className="text-[10px] text-[#B91C1C] font-bold">🔴 {t('criticalAllergy')}</span>
-                  </div>
-                  <h4 className="font-bold text-sm text-[#122415]">{patient.fullName}</h4>
-                  <p className="text-[11px] text-[#38523C]">Male, 32 yrs • ABHA: {patient.abhaId}</p>
-                </div>
-
-                {/* Queue Item 2 */}
-                <div className="p-3.5 rounded-xl bg-white border border-[#E0F2E1] opacity-75 hover:opacity-100">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="font-bold text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-700">
-                      Token 102
-                    </span>
-                    <span className="text-[10px] text-[#B45309] font-bold">🟡 2 {t('pendingVerification')}</span>
-                  </div>
-                  <h4 className="font-bold text-sm text-[#122415]">Sunita Verma</h4>
-                  <p className="text-[11px] text-[#38523C]">Female, 45 yrs • PHC Referral</p>
-                </div>
-
-                {/* Queue Item 3 */}
-                <div className="p-3.5 rounded-xl bg-white border border-[#E0F2E1] opacity-75 hover:opacity-100">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="font-bold text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-700">
-                      Token 103
-                    </span>
-                    <span className="text-[10px] text-gray-500 font-bold">{t('routineFollowup')}</span>
-                  </div>
-                  <h4 className="font-bold text-sm text-[#122415]">Rajesh Patel</h4>
-                  <p className="text-[11px] text-[#38523C]">Male, 58 yrs • Diabetes OPD</p>
-                </div>
-              </div>
-            </div>
-
-            {/* AI Patient Summary Card */}
-            <div className="bg-white rounded-2xl p-4 border border-[#C8E6C9]">
-              <div className="flex items-center gap-2 text-[#1B5E20] font-bold text-xs mb-2">
-                <Bot className="w-4 h-4 text-[#66BB6A]" /> {t('aiIntakePreSummary')}
-              </div>
-              <p className="text-xs text-[#38523C] bg-[#EFF6FF] p-3 rounded-xl border border-[#BFDBFE] leading-relaxed">
-                Patient reports mild cough and sore throat for 2 days. Self-prescribed Amoxicillin 250mg yesterday. <strong>Verified Penicillin Allergy</strong> on record!
+              <p className="text-xs text-[#38523C] mt-0.5">
+                Enter Citizen 12-Digit Permanent ID (e.g. <strong className="text-[#1B5E20]">GOV-IND-2026-88412</strong>), Mobile (<strong className="text-[#1B5E20]">+91 98765 43210</strong>) or Aadhaar to fetch history.
               </p>
             </div>
+            <span className="text-[10px] font-extrabold bg-[#E8F5E9] text-[#1B5E20] px-3 py-1 rounded-full border border-[#A5D6A7] flex items-center gap-1">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#2E7D32]" /> Authorized Physician Access
+            </span>
           </div>
 
-          {/* Active Patient Clinical Workspace */}
-          <div className="lg:col-span-3 space-y-6">
-            {/* Patient Workspace Bar */}
-            <div className="bg-white rounded-2xl p-6 border border-[#C8E6C9] flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="text-2xl font-bold text-[#1B5E20] font-display">{patient.fullName}</h3>
-                  <span className="bg-[#E8F5E9] text-[#1B5E20] text-xs font-bold px-2.5 py-0.5 rounded-full border border-[#A5D6A7]">
-                    {t('bloodGroup')}: {patient.bloodGroup}
-                  </span>
-                </div>
-                <p className="text-xs text-[#38523C]">
-                  Permanent Health ID: <strong className="text-[#122415]">{patient.permanentId}</strong> • Height: {patient.height} • Weight: {patient.weight}
-                </p>
-              </div>
+          <form onSubmit={handleSearchCitizen} className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="w-5 h-5 text-gray-400 absolute left-3.5 top-3.5" />
+              <input
+                type="text"
+                placeholder="Search by 12-digit Health ID (GOV-IND-2026-88412), Phone (+91 98765 43210), or Name..."
+                value={searchQuery}
+                onChange={(e) => { setSearchQuery(e.target.value); setSearchError(''); }}
+                className="w-full pl-11 pr-4 py-3 border-2 border-[#C8E6C9] focus:border-[#1B5E20] rounded-xl text-sm font-bold outline-none shadow-inner"
+              />
+            </div>
+            <button
+              type="submit"
+              className="btn btn-primary text-xs px-7 flex items-center gap-2 shadow-md text-sm font-bold"
+            >
+              <UserCheck className="w-4 h-4 text-[#66BB6A]" /> Search Citizen
+            </button>
+          </form>
 
-              {/* Critical Alert Warning */}
-              <div className="bg-[#FEE2E2] border border-[#FCA5A5] px-4 py-2 rounded-xl flex items-center gap-2 text-[#B91C1C] text-xs font-bold">
+          {searchError && (
+            <div className="p-2.5 bg-[#FEE2E2] text-[#B91C1C] rounded-xl text-xs font-bold border border-[#FCA5A5]">
+              ⚠️ {searchError}
+            </div>
+          )}
+
+          {/* Quick Click Demo Citizen ID Chips */}
+          <div className="pt-1 flex flex-wrap items-center gap-2 text-xs">
+            <span className="text-[11px] font-bold text-[#38523C]">Quick Test Lookup:</span>
+            {allPatients.map((p) => (
+              <button
+                key={p.permanentId}
+                type="button"
+                onClick={() => handleSearchCitizen(undefined, p.permanentId)}
+                className={`px-3 py-1 rounded-lg font-mono text-xs font-extrabold transition-all border ${
+                  patient.permanentId === p.permanentId
+                    ? 'bg-[#1B5E20] text-white border-[#1B5E20] shadow'
+                    : 'bg-[#E8F5E9] text-[#1B5E20] border-[#A5D6A7] hover:bg-[#D4EDD6]'
+                }`}
+              >
+                {p.fullName} ({p.permanentId})
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Active Patient Clinical Workspace */}
+        <div className="space-y-6">
+          {/* Patient Workspace Bar */}
+          <div className="bg-white rounded-2xl p-6 border border-[#C8E6C9] flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-sm">
+            <div>
+              <div className="flex items-center gap-3 mb-1">
+                <h3 className="text-2xl font-bold text-[#1B5E20] font-display">{patient.fullName}</h3>
+                <span className="bg-[#E8F5E9] text-[#1B5E20] text-xs font-bold px-2.5 py-0.5 rounded-full border border-[#A5D6A7]">
+                  {t('bloodGroup')}: {patient.bloodGroup}
+                </span>
+                <span className="bg-[#EFF6FF] text-[#1D4ED8] text-xs font-bold px-2.5 py-0.5 rounded-full border border-[#BFDBFE]">
+                  {patient.gender}, {patient.dob}
+                </span>
+              </div>
+              <p className="text-xs text-[#38523C] space-x-3">
+                <span>12-Digit Permanent Health ID: <strong className="text-[#122415] font-mono text-sm">{patient.permanentId}</strong></span>
+                <span>• ABHA: <strong className="text-[#122415] font-mono">{patient.abhaId}</strong></span>
+                <span>• Aadhaar: <strong className="text-[#122415] font-mono">{patient.aadhaarNumber}</strong></span>
+              </p>
+              <div className="text-[11px] text-[#38523C] mt-1 flex items-center gap-4">
+                <span>Height: {patient.height}</span>
+                <span>Weight: {patient.weight}</span>
+                <span className="flex items-center gap-1"><Phone className="w-3 h-3 text-[#1B5E20]" /> Contact: {patient.mobile}</span>
+                <span>Emergency: {patient.emergencyContact?.name} ({patient.emergencyContact?.mobile})</span>
+              </div>
+            </div>
+
+            {/* Critical Alert Warning */}
+            {patient.allergies.some(a => a.severity === 'critical') && (
+              <div className="bg-[#FEE2E2] border border-[#FCA5A5] px-4 py-2.5 rounded-xl flex items-center gap-2 text-[#B91C1C] text-xs font-bold shadow-sm">
                 <AlertOctagon className="w-5 h-5 shrink-0" />
-                <span>🔴 {t('penicillinAllergy')}</span>
+                <span>🔴 CONFIRMED SEVERE ALLERGY FLAG ON RECORD</span>
               </div>
-            </div>
+            )}
+          </div>
 
-            {/* Doctor View Tabs */}
-            <div className="flex gap-2 border-b border-[#C8E6C9] pb-2">
-              <button
-                onClick={() => setActiveDoctorTab('overview')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                  activeDoctorTab === 'overview'
-                    ? 'bg-[#1B5E20] text-white shadow'
-                    : 'bg-white text-[#38523C] hover:bg-[#E8F5E9]'
-                }`}
-              >
-                {t('clinicalProfileHistory')}
-              </button>
-              <button
-                onClick={() => setActiveDoctorTab('verification')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  activeDoctorTab === 'verification'
-                    ? 'bg-[#1B5E20] text-white shadow'
-                    : 'bg-white text-[#38523C] hover:bg-[#E8F5E9]'
-                }`}
-              >
-                {t('verificationQueueTab')}
-                {pendingVerificationItems.length > 0 && (
-                  <span className="bg-[#FDE68A] text-[#78350F] text-[10px] px-1.5 py-0.5 rounded-full font-extrabold">
-                    {pendingVerificationItems.length}
-                  </span>
-                )}
-              </button>
-              <button
-                onClick={() => setActiveDoctorTab('notes')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                  activeDoctorTab === 'notes'
-                    ? 'bg-[#1B5E20] text-white shadow'
-                    : 'bg-white text-[#38523C] hover:bg-[#E8F5E9]'
-                }`}
-              >
-                {t('addClinicalNotesPrescription')}
-              </button>
-            </div>
+          {/* Doctor View Tabs */}
+          <div className="flex gap-2 border-b border-[#C8E6C9] pb-2">
+            <button
+              onClick={() => setActiveDoctorTab('overview')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                activeDoctorTab === 'overview'
+                  ? 'bg-[#1B5E20] text-white shadow'
+                  : 'bg-white text-[#38523C] hover:bg-[#E8F5E9]'
+              }`}
+            >
+              {t('clinicalProfileHistory')}
+            </button>
+            <button
+              onClick={() => setActiveDoctorTab('documents')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                activeDoctorTab === 'documents'
+                  ? 'bg-[#1B5E20] text-white shadow'
+                  : 'bg-white text-[#38523C] hover:bg-[#E8F5E9]'
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5" /> Citizen Documents & Prescription Scans ({patient.documents.length})
+            </button>
+            <button
+              onClick={() => setActiveDoctorTab('verification')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                activeDoctorTab === 'verification'
+                  ? 'bg-[#1B5E20] text-white shadow'
+                  : 'bg-white text-[#38523C] hover:bg-[#E8F5E9]'
+              }`}
+            >
+              {t('verificationQueueTab')}
+              {pendingVerificationItems.length > 0 && (
+                <span className="bg-[#FDE68A] text-[#78350F] text-[10px] px-1.5 py-0.5 rounded-full font-extrabold">
+                  {pendingVerificationItems.length}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveDoctorTab('notes')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                activeDoctorTab === 'notes'
+                  ? 'bg-[#1B5E20] text-white shadow'
+                  : 'bg-white text-[#38523C] hover:bg-[#E8F5E9]'
+              }`}
+            >
+              ✍️ Write Prescription to Health ID
+            </button>
+          </div>
 
-            {/* Tab 1: Clinical Profile */}
-            {activeDoctorTab === 'overview' && (
-              <div className="space-y-6">
-                {/* Verified Allergies */}
-                <div className="card">
-                  <h4 className="font-bold text-[#1B5E20] text-sm mb-3 uppercase tracking-wider">
-                    {t('verifiedAllergiesRules')}
-                  </h4>
+          {/* Tab 1: Clinical Profile */}
+          {activeDoctorTab === 'overview' && (
+            <div className="space-y-6">
+              {/* Verified Allergies */}
+              <div className="card">
+                <h4 className="font-bold text-[#1B5E20] text-sm mb-3 uppercase tracking-wider">
+                  {t('verifiedAllergiesRules')}
+                </h4>
+                {patient.allergies.length === 0 ? (
+                  <p className="text-xs text-gray-500 italic">No allergies recorded for this citizen.</p>
+                ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {patient.allergies.map((alg) => (
                       <div
@@ -209,20 +270,24 @@ export const DoctorPortal: React.FC = () => {
                         <div className="flex justify-between font-bold text-[#122415]">
                           <span>{alg.allergen}</span>
                           <span className={`text-[10px] uppercase font-extrabold ${alg.status === 'verified' ? 'text-[#1B5E20]' : 'text-[#B45309]'}`}>
-                            {alg.status === 'verified' ? '🟢 Verified' : '🟡 Pending Doctor Review'}
+                            {alg.status === 'verified' ? '🟢 Doctor Verified' : '🟡 Pending Verification'}
                           </span>
                         </div>
                         <p className="text-[11px] text-[#38523C] mt-1">{alg.reaction}</p>
                       </div>
                     ))}
                   </div>
-                </div>
+                )}
+              </div>
 
-                {/* Active Medications */}
-                <div className="card">
-                  <h4 className="font-bold text-[#1B5E20] text-sm mb-3 uppercase tracking-wider">
-                    {t('activeMedicationsTitle')}
-                  </h4>
+              {/* Active Medications */}
+              <div className="card">
+                <h4 className="font-bold text-[#1B5E20] text-sm mb-3 uppercase tracking-wider">
+                  {t('activeMedicationsTitle')}
+                </h4>
+                {patient.medications.length === 0 ? (
+                  <p className="text-xs text-gray-500 italic">No active medications on record.</p>
+                ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {patient.medications.map((med) => (
                       <div key={med.id} className="p-3.5 rounded-xl bg-white border border-[#C8E6C9] text-xs">
@@ -236,22 +301,96 @@ export const DoctorPortal: React.FC = () => {
                       </div>
                     ))}
                   </div>
+                )}
+              </div>
+
+              {/* Timeline */}
+              <div className="card">
+                <h4 className="font-bold text-[#1B5E20] text-sm mb-3 uppercase tracking-wider">
+                  Permanent Health Timeline & History
+                </h4>
+                <div className="space-y-2">
+                  {patient.timeline.map((ev) => (
+                    <div key={ev.id} className="p-3 bg-[#E8F5E9] border border-[#C8E6C9] rounded-xl text-xs flex justify-between items-start">
+                      <div>
+                        <span className="font-bold text-[#122415] block">{ev.title}</span>
+                        <span className="text-[11px] text-[#38523C]">{ev.facility} • {ev.summary}</span>
+                      </div>
+                      <span className="text-[10px] font-bold text-[#1B5E20] shrink-0 bg-white px-2 py-0.5 rounded">{ev.date}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Tab 2: Verification Engine */}
-            {activeDoctorTab === 'verification' && (
-              <div className="bg-white rounded-2xl p-6 border border-[#C8E6C9] space-y-4">
-                <div>
-                  <h3 className="text-xl font-bold text-[#1B5E20] font-display">
-                    {t('doctorVerificationEngine')}
-                  </h3>
-                  <p className="text-xs text-[#38523C] mt-0.5">
-                    {t('keySafeguard')}
-                  </p>
+          {/* Tab 2: Citizen Documents & Scans */}
+          {activeDoctorTab === 'documents' && (
+            <div className="bg-white rounded-2xl p-6 border border-[#C8E6C9] space-y-4">
+              <div>
+                <h3 className="text-xl font-bold text-[#1B5E20] font-display flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-[#66BB6A]" /> Digital Health Locker Documents ({patient.documents.length})
+                </h3>
+                <p className="text-xs text-[#38523C] mt-0.5">
+                  Inspect citizen-uploaded prescription scans, lab reports, and AI Vision Neural extractions.
+                </p>
+              </div>
+
+              {patient.documents.length === 0 ? (
+                <div className="p-8 text-center bg-[#E8F5E9] rounded-2xl border border-[#C8E6C9]">
+                  <p className="text-xs font-bold text-[#38523C]">No medical documents uploaded in locker for this citizen yet.</p>
                 </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {patient.documents.map((doc) => (
+                    <div key={doc.id} className="p-4 rounded-xl border border-[#C8E6C9] bg-white space-y-2 text-xs shadow-sm">
+                      <div className="flex justify-between items-start">
+                        <span className="font-bold text-sm text-[#122415]">{doc.title}</span>
+                        <span className="text-[10px] font-extrabold bg-[#E8F5E9] text-[#1B5E20] px-2 py-0.5 rounded border border-[#A5D6A7] uppercase">
+                          {doc.category.replace('_', ' ')}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-[#38523C]">{doc.facility} • Uploaded: {doc.uploadDate}</p>
 
+                      {doc.handwrittenNotesText && (
+                        <div className="p-2.5 bg-[#FAF5FF] border border-[#F3E8FF] rounded-lg">
+                          <span className="text-[10px] font-bold text-[#6B21A8] block">✍️ Recognized Doctor Cursive Note:</span>
+                          <p className="text-[11px] text-[#7E22CE] italic mt-0.5">"{doc.handwrittenNotesText}"</p>
+                        </div>
+                      )}
+
+                      {doc.extractedData && (
+                        <div className="p-2.5 bg-[#EFF6FF] border border-[#BFDBFE] rounded-lg space-y-1">
+                          <span className="text-[10px] font-bold text-[#1D4ED8] block">🧠 Vision Neural Extraction:</span>
+                          {doc.extractedData.medication && <p className="text-[11px] text-[#1E40AF]"><strong>Meds:</strong> {doc.extractedData.medication}</p>}
+                          {doc.extractedData.diagnosis && <p className="text-[11px] text-[#1E40AF]"><strong>Diagnosis:</strong> {doc.extractedData.diagnosis}</p>}
+                          {doc.extractedData.doctor && <p className="text-[11px] text-[#1E40AF]"><strong>Prescribed By:</strong> {doc.extractedData.doctor}</p>}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Tab 3: Verification Engine */}
+          {activeDoctorTab === 'verification' && (
+            <div className="bg-white rounded-2xl p-6 border border-[#C8E6C9] space-y-4">
+              <div>
+                <h3 className="text-xl font-bold text-[#1B5E20] font-display">
+                  {t('doctorVerificationEngine')}
+                </h3>
+                <p className="text-xs text-[#38523C] mt-0.5">
+                  Confirm or correct reported records before converting into permanent verified clinical history.
+                </p>
+              </div>
+
+              {verificationQueue.length === 0 ? (
+                <div className="p-8 text-center bg-[#E8F5E9] rounded-2xl border border-[#C8E6C9]">
+                  <p className="text-xs font-bold text-[#1B5E20]">🟢 No pending records requiring verification.</p>
+                </div>
+              ) : (
                 <div className="space-y-4 pt-2">
                   {verificationQueue.map((v) => (
                     <div
@@ -305,60 +444,65 @@ export const DoctorPortal: React.FC = () => {
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+          )}
 
-            {/* Tab 3: Clinical Notes */}
-            {activeDoctorTab === 'notes' && (
-              <div className="bg-white rounded-2xl p-6 border border-[#C8E6C9]">
-                <h3 className="text-xl font-bold text-[#1B5E20] font-display mb-4">
-                  {t('addPrescriptionNote')}
+          {/* Tab 4: Write Prescription to Health ID */}
+          {activeDoctorTab === 'notes' && (
+            <div className="bg-white rounded-2xl p-6 border border-[#C8E6C9] shadow-sm space-y-4">
+              <div>
+                <h3 className="text-xl font-bold text-[#1B5E20] font-display flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-[#66BB6A]" /> Write Verified Prescription to Citizen Permanent Health ID
                 </h3>
-
-                <form onSubmit={handleAddDoctorNote} className="space-y-4 max-w-lg">
-                  <div>
-                    <label className="block text-xs font-bold text-[#122415] mb-1">{t('entryType')}</label>
-                    <select
-                      value={newNoteType}
-                      onChange={(e: any) => setNewNoteType(e.target.value)}
-                      className="w-full px-3 py-2 border border-[#C8E6C9] rounded-lg text-sm"
-                    >
-                      <option value="medication">{t('newPrescriptionMed')}</option>
-                      <option value="allergy">{t('confirmedAllergyFlag')}</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-[#122415] mb-1">{t('nameTitle')}</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. Paracetamol 650mg or Sulfa Allergy"
-                      value={newNoteName}
-                      onChange={(e) => setNewNoteName(e.target.value)}
-                      className="w-full px-3 py-2 border border-[#C8E6C9] rounded-lg text-sm"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-[#122415] mb-1">{t('clinicalDetailsInstructions')}</label>
-                    <textarea
-                      rows={3}
-                      required
-                      placeholder="Enter dosage, duration, or clinical findings..."
-                      value={newNoteDetail}
-                      onChange={(e) => setNewNoteDetail(e.target.value)}
-                      className="w-full px-3 py-2 border border-[#C8E6C9] rounded-lg text-sm"
-                    ></textarea>
-                  </div>
-
-                  <button type="submit" className="btn btn-primary text-xs flex items-center gap-2">
-                    <PlusCircle className="w-4 h-4 text-[#66BB6A]" /> {t('savePermanentRecord')}
-                  </button>
-                </form>
+                <p className="text-xs text-[#38523C] mt-0.5">
+                  Directly appends doctor-verified prescription or critical allergy flag to Permanent ID: <strong className="font-mono text-[#1B5E20]">{patient.permanentId}</strong> ({patient.fullName}).
+                </p>
               </div>
-            )}
-          </div>
+
+              <form onSubmit={handleAddDoctorNote} className="space-y-4 max-w-lg">
+                <div>
+                  <label className="block text-xs font-bold text-[#122415] mb-1">{t('entryType')}</label>
+                  <select
+                    value={newNoteType}
+                    onChange={(e: any) => setNewNoteType(e.target.value)}
+                    className="w-full px-3 py-2 border border-[#C8E6C9] rounded-lg text-sm"
+                  >
+                    <option value="medication">{t('newPrescriptionMed')}</option>
+                    <option value="allergy">{t('confirmedAllergyFlag')}</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#122415] mb-1">{t('nameTitle')}</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Paracetamol 650mg or Penicillin Allergy"
+                    value={newNoteName}
+                    onChange={(e) => setNewNoteName(e.target.value)}
+                    className="w-full px-3 py-2 border border-[#C8E6C9] rounded-lg text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#122415] mb-1">{t('clinicalDetailsInstructions')}</label>
+                  <textarea
+                    rows={3}
+                    required
+                    placeholder="Enter dosage (e.g. 1 Tab BD after meals x 5 days), duration, or clinical findings..."
+                    value={newNoteDetail}
+                    onChange={(e) => setNewNoteDetail(e.target.value)}
+                    className="w-full px-3 py-2 border border-[#C8E6C9] rounded-lg text-sm"
+                  ></textarea>
+                </div>
+
+                <button type="submit" className="btn btn-primary text-xs flex items-center gap-2 px-6 py-2.5">
+                  <PlusCircle className="w-4 h-4 text-[#66BB6A]" /> Save to Citizen Permanent Health ID ({patient.permanentId}) 🟢
+                </button>
+              </form>
+            </div>
+          )}
         </div>
       </div>
 
@@ -369,10 +513,10 @@ export const DoctorPortal: React.FC = () => {
             <div className="flex justify-between items-start border-b border-[#C8E6C9] pb-3">
               <div>
                 <h3 className="text-lg font-bold text-[#1B5E20] font-display flex items-center gap-2">
-                  <Edit3 className="w-5 h-5 text-[#66BB6A]" /> Edit & Correct Patient Claim
+                  <Edit3 className="w-5 h-5 text-[#66BB6A]" /> Edit & Correct Patient Entry
                 </h3>
                 <p className="text-xs text-[#38523C] mt-0.5">
-                  Refine patient-reported entry into an official verified clinical record
+                  Refine entry into an official verified clinical record
                 </p>
               </div>
               <button onClick={() => setEditingVqItem(null)} className="text-gray-400 hover:text-black font-bold text-xl">✕</button>
@@ -380,7 +524,7 @@ export const DoctorPortal: React.FC = () => {
 
             <form onSubmit={handleSaveCorrection} className="space-y-4">
               <div className="p-3 rounded-xl bg-[#FEF3C7] border border-[#FDE68A] text-xs text-[#78350F]">
-                <strong className="block mb-0.5">Original Claim ({editingVqItem.source}):</strong>
+                <strong className="block mb-0.5">Original Entry ({editingVqItem.source}):</strong>
                 <span>{editingVqItem.title} • {editingVqItem.details}</span>
               </div>
 
@@ -391,7 +535,7 @@ export const DoctorPortal: React.FC = () => {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Lactose Intolerance (Dairy Allergy) or Amoxicillin 500mg"
+                  placeholder="e.g. Lactose Intolerance or Amoxicillin 500mg"
                   value={modTitle}
                   onChange={(e) => setModTitle(e.target.value)}
                   className="w-full px-3 py-2 border-2 border-[#1B5E20] rounded-lg text-sm font-semibold"

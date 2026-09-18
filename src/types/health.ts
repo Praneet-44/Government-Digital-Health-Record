@@ -56,6 +56,13 @@ export interface DocumentItem {
   facility: string;
   fileSize: string;
   clinicalStatus: ClinicalStatus;
+  imageUrl?: string;
+  detectedDocumentType?: 'handwritten_prescription' | 'printed_lab_report' | 'hybrid_clinical_note';
+  ocrEngine?: 'Vision Neural OCR (Printed + Handwriting)';
+  handwritingConfidence?: number;
+  printedConfidence?: number;
+  handwrittenNotesText?: string;
+  printedText?: string;
   extractedData?: {
     medication?: string;
     dosage?: string;
@@ -63,6 +70,7 @@ export interface DocumentItem {
     hospital?: string;
     date?: string;
     diagnosis?: string;
+    handwrittenInstructions?: string;
   };
 }
 
@@ -93,9 +101,10 @@ export interface VerificationItem {
   type: 'allergy' | 'medication' | 'operation' | 'condition';
   title: string;
   details: string;
-  source: 'Patient Reported' | 'AI OCR Scan';
+  source: 'Patient Reported' | 'AI OCR Scan' | 'AI Image Vision Processor';
   reportedDate: string;
   status: 'pending' | 'verified' | 'rejected';
+  handwrittenExtractionNote?: string;
 }
 
 export interface CitizenProfile {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useHealthRecord } from '../../context/HealthRecordContext';
-import { ShieldCheck, Eye, Lock, Building2 } from 'lucide-react';
+import { Eye, Lock, Building2 } from 'lucide-react';
 
 export const ConsentAccessView: React.FC = () => {
   const { patient } = useHealthRecord();
