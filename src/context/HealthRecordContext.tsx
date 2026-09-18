@@ -20,6 +20,7 @@ interface HealthRecordContextType {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   patient: CitizenProfile;
+  setPatient: (patient: CitizenProfile) => void;
   allPatients: CitizenProfile[];
   verificationQueue: VerificationItem[];
   triageRedFlagsCount: number;
@@ -553,6 +554,7 @@ export const HealthRecordProvider: React.FC<{ children: React.ReactNode }> = ({ 
         activeTab,
         setActiveTab,
         patient,
+        setPatient,
         allPatients,
         verificationQueue,
         triageRedFlagsCount,

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useHealthRecord } from '../../context/HealthRecordContext.tsx';
-import { Stethoscope, Search, UserCheck, AlertOctagon, PlusCircle, Check, X, Edit3, FileText, Sparkles, Phone, ShieldCheck, Pill, Activity, Calendar, User } from 'lucide-react';
+import { Stethoscope, Search, UserCheck, AlertOctagon, PlusCircle, Check, X, Edit3, FileText, ShieldCheck, Activity, User } from 'lucide-react';
 import type { VerificationItem } from '../../types/health.ts';
 
 export const DoctorPortal: React.FC = () => {
