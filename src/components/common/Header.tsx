@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useHealthRecord } from '../../context/HealthRecordContext.tsx';
 import type { UserRole } from '../../types/health.ts';
-import { ShieldCheck, Stethoscope, User, Monitor, UserPlus, Building2, Globe, HeartPulse } from 'lucide-react';
+import { ShieldCheck, Stethoscope, User, Monitor, UserPlus, Building2, Globe, HeartPulse, Mic, Sparkles } from 'lucide-react';
+import { SarvamVoiceAssistantModal } from '../citizen/SarvamVoiceAssistantModal.tsx';
 
 export const Header: React.FC = () => {
   const { role, setRole, language, setLanguage, patient, t } = useHealthRecord();
+  const [showSarvamModal, setShowSarvamModal] = useState(false);
 
   const roles: { key: UserRole; label: string; icon: React.ReactNode }[] = [
     { key: 'public', label: t('publicHome'), icon: <HeartPulse className="w-4 h-4" /> },
@@ -23,7 +25,16 @@ export const Header: React.FC = () => {
           <ShieldCheck className="w-4 h-4 text-[#66BB6A]" />
           <span>{t('govNetwork')}</span>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowSarvamModal(true)}
+            className="flex items-center gap-1.5 bg-[#66BB6A] text-[#0F3812] px-3 py-0.5 rounded-lg text-xs font-black hover:bg-[#52ab56] transition-all shadow-sm cursor-pointer"
+            title="Sarvam.ai Speech-to-Text (Saaras Model) & TTS for 22 Indian Languages"
+          >
+            <Mic className="w-3.5 h-3.5" />
+            <span>Sarvam Voice AI (22 Langs)</span>
+          </button>
+
           <span className="hidden md:inline text-[#D0EBD2]">{t('facility')}</span>
           <div className="flex items-center gap-1.5 bg-[#1B5E20] px-2.5 py-0.5 rounded-lg text-white font-bold border border-[#388E3C]">
             <Globe className="w-3.5 h-3.5 text-[#66BB6A]" />
@@ -49,7 +60,7 @@ export const Header: React.FC = () => {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-black text-white tracking-tight font-display">MediKiosk</h1>
+              <h1 className="text-2xl font-black text-white tracking-tight font-display">Uyire Kavalan</h1>
               <span className="bg-[#66BB6A] text-[#0F3812] text-[10px] font-black px-2 py-0.5 rounded-md tracking-wider uppercase shadow-sm">
                 {t('govtDigitalHealth')}
               </span>
@@ -102,6 +113,12 @@ export const Header: React.FC = () => {
             </span>
           </div>
         </div>
+      )}
+      {/* Sarvam.ai Multilingual Voice Assistant Modal */}
+      {showSarvamModal && (
+        <SarvamVoiceAssistantModal
+          onClose={() => setShowSarvamModal(false)}
+        />
       )}
     </header>
   );

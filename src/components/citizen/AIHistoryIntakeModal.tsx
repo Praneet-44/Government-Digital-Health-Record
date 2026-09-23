@@ -12,9 +12,13 @@ import {
   Wand2,
   Check,
   ArrowRight,
-  ShieldCheck
+  ShieldCheck,
+  Globe,
+  ExternalLink
 } from 'lucide-react';
 import { useHealthRecord } from '../../context/HealthRecordContext.tsx';
+import { evaluateClinicalWithMedGemma, type WebSearchSource, NMC_MANDATORY_DISCLAIMER } from '../../services/medGemmaService.ts';
+import { SarvamVoiceAssistantModal } from './SarvamVoiceAssistantModal.tsx';
 
 export interface ImageAnalysisResult {
   id: string;
@@ -38,6 +42,7 @@ interface ChatMessage {
   imageResult?: ImageAnalysisResult;
   processingStep?: 'preprocessing' | 'printed_ocr' | 'handwriting_ai' | 'synthesizing' | 'completed';
   isSavedToLocker?: boolean;
+  webSources?: WebSearchSource[];
 }
 
 interface AIHistoryIntakeModalProps {
@@ -90,19 +95,20 @@ const PRESET_DOCUMENTS: ImageAnalysisResult[] = [
 ];
 
 export const AIHistoryIntakeModal: React.FC<AIHistoryIntakeModalProps> = ({ onClose }) => {
-  const { t, uploadDocument } = useHealthRecord();
+  const { t, uploadDocument, patient, addFhirAuditLog } = useHealthRecord();
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'msg-1',
       role: 'ai',
-      text: '💡 Hello! I am your Public AI Health Awareness & Vision Assistant. Ask me any health question, symptom queries, or attach paper prescriptions (handwritten doctor notes & printed lab reports) for instant AI analysis. Note: This conversation is strictly private and stored locally in your document locker.'
+      text: `💡 Hello! I am your Public AI Health Awareness Assistant. Powered by Google MedGemma (medgemma-7b-it) clinical reasoning, Sarvam.ai (Saaras STT & 22 Indian languages) and Vision OCR. Speak or type in native languages (Tamil, Hindi, Hinglish, Tanglish, Bengali, Telugu) or attach paper prescriptions for instant analysis!\n\n⚠️ ${NMC_MANDATORY_DISCLAIMER}`
     }
   ]);
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [showImagePicker, setShowImagePicker] = useState(false);
+  const [showSarvamModal, setShowSarvamModal] = useState(false);
 
-  const handleSend = (e?: React.FormEvent) => {
+  const handleSend = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!input.trim()) return;
 
@@ -116,36 +122,19 @@ export const AIHistoryIntakeModal: React.FC<AIHistoryIntakeModalProps> = ({ onCl
     setMessages(newMsgs);
     setInput('');
 
-    setTimeout(() => {
-      if (userMsg.toLowerCase().includes('fever') || userMsg.toLowerCase().includes('cough')) {
-        setMessages([
-          ...newMsgs,
-          {
-            id: `msg-${Date.now() + 1}`,
-            role: 'ai',
-            text: '🌡️ Health Awareness Info: Mild fever and cough often stem from viral infections. Stay hydrated, rest, and monitor temperature. If fever exceeds 102°F or persists > 3 days, consult a physician with your 12-digit Permanent Health ID.'
-          }
-        ]);
-      } else if (userMsg.toLowerCase().includes('headache') || userMsg.toLowerCase().includes('pain')) {
-        setMessages([
-          ...newMsgs,
-          {
-            id: `msg-${Date.now() + 1}`,
-            role: 'ai',
-            text: '💡 Health Awareness Info: Headaches are often linked to hydration, stress, or eye strain. Ensure adequate sleep and water intake. Seek urgent medical care if accompanied by sudden neck stiffness or vision loss.'
-          }
-        ]);
-      } else {
-        setMessages([
-          ...newMsgs,
-          {
-            id: `msg-${Date.now() + 1}`,
-            role: 'ai',
-            text: `💡 Health Awareness Info: Thank you for asking. Maintaining balanced nutrition, regular exercise, and timely health checkups supports general wellness. You can also upload any prescription image below to inspect printed text & handwritten notes!`
-          }
-        ]);
+    // Call Google MedGemma Clinical Engine with DPDP PHI Anonymization & Online Web Search Grounding
+    const res = await evaluateClinicalWithMedGemma(userMsg, patient);
+    addFhirAuditLog(res.fhirAuditLog);
+
+    setMessages([
+      ...newMsgs,
+      {
+        id: `msg-${Date.now() + 1}`,
+        role: 'ai',
+        text: res.formattedResponseText,
+        webSources: res.webSearchSources
       }
-    }, 800);
+    ]);
   };
 
   const handleSelectImagePreset = (preset: ImageAnalysisResult) => {
@@ -237,11 +226,11 @@ export const AIHistoryIntakeModal: React.FC<AIHistoryIntakeModalProps> = ({ onCl
             </div>
             <div>
               <h3 className="text-lg font-bold text-[#1B5E20] font-display flex items-center gap-2">
-                Public AI Health Awareness & Vision Assistant
+                Google MedGemma Clinical Engine & Vision Assistant
               </h3>
-              <p className="text-xs text-[#38523C] flex items-center gap-1.5">
+              <p className="text-xs text-[#38523C] flex items-center gap-1.5 font-medium">
                 <Wand2 className="w-3.5 h-3.5 text-[#2E7D32]" />
-                Private Self-Awareness • Vision OCR & Doctor Handwriting Analyzer
+                Powered by medgemma-7b-it • DPDP Act 2023 PHI Anonymizer • Sarvam STT
               </p>
             </div>
           </div>
@@ -249,14 +238,19 @@ export const AIHistoryIntakeModal: React.FC<AIHistoryIntakeModalProps> = ({ onCl
         </div>
 
         {/* Dynamic Mode Notification Banner */}
-        <div className="my-3 p-2.5 rounded-xl text-xs font-bold bg-[#E8F5E9] text-[#1B5E20] border border-[#A5D6A7] flex items-center justify-between">
+        <div className="my-3 p-2.5 rounded-xl text-xs font-bold bg-[#E8F5E9] text-[#1B5E20] border border-[#A5D6A7] flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Lock className="w-4 h-4 text-[#1B5E20] shrink-0" />
-            <span>🛡️ Public Health Awareness Mode (Private • Citizen Self-Service)</span>
+            <span>🛡️ India DPDP Act 2023 PHI Anonymized (`[PATIENT_TOKEN_8841]`)</span>
           </div>
-          <span className="text-[10px] font-extrabold bg-white/80 px-2 py-0.5 rounded text-[#1B5E20] border border-[#C8E6C9]">
-            ✍️ Handwriting Neural Engine Active
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] font-extrabold bg-[#1B5E20] text-white px-2 py-0.5 rounded border border-[#A5D6A7]">
+              Google MedGemma 7B
+            </span>
+            <span className="text-[10px] font-extrabold bg-white text-[#1B5E20] px-2 py-0.5 rounded border border-[#C8E6C9]">
+              NMC Compliant
+            </span>
+          </div>
         </div>
 
         {/* Chat Body */}
@@ -274,6 +268,38 @@ export const AIHistoryIntakeModal: React.FC<AIHistoryIntakeModalProps> = ({ onCl
                 }`}
               >
                 <p>{m.text}</p>
+
+                {/* Online Medical Web Search Grounding Citations */}
+                {m.webSources && m.webSources.length > 0 && (
+                  <div className="mt-3 p-3 bg-white rounded-xl border border-[#A5D6A7] space-y-2 text-[#122415]">
+                    <div className="flex justify-between items-center border-b border-[#E0E0E0] pb-1.5">
+                      <span className="font-extrabold text-[11px] text-[#1B5E20] flex items-center gap-1.5">
+                        <Globe className="w-3.5 h-3.5 text-[#2E7D32]" /> Live Online Medical Web Search Sources
+                      </span>
+                      <span className="text-[9px] font-bold bg-[#E8F5E9] text-[#1B5E20] px-2 py-0.5 rounded">
+                        Google Search Grounded
+                      </span>
+                    </div>
+
+                    <div className="space-y-1.5 text-[10.5px]">
+                      {m.webSources.map((src, i) => (
+                        <div key={i} className="p-2 bg-[#F8FAF8] rounded-lg border border-[#E8F5E9] space-y-0.5">
+                          <a
+                            href={src.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-bold text-[#1D4ED8] hover:underline flex items-center gap-1"
+                          >
+                            <span>{src.title}</span>
+                            <ExternalLink className="w-3 h-3 text-[#1D4ED8] shrink-0" />
+                          </a>
+                          <p className="text-[#38523C] text-[10px]">{src.snippet}</p>
+                          <span className="text-[9px] font-mono text-gray-500 block">Source: {src.source}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Processing Steps Animation */}
                 {m.processingStep && m.processingStep !== 'completed' && (
@@ -429,18 +455,17 @@ export const AIHistoryIntakeModal: React.FC<AIHistoryIntakeModalProps> = ({ onCl
 
             <button
               type="button"
-              onClick={toggleVoice}
-              className={`p-2.5 rounded-xl border transition-all ${
-                isListening ? 'bg-[#DC2626] text-white animate-pulse' : 'bg-[#E8F5E9] text-[#1B5E20] border-[#C8E6C9] hover:bg-[#A5D6A7]'
-              }`}
-              title="Voice Input (Tamil / Hindi / English)"
+              onClick={() => setShowSarvamModal(true)}
+              className="p-2.5 rounded-xl border bg-[#1B5E20] text-white border-[#1B5E20] hover:bg-[#27702C] transition-all flex items-center gap-1 text-xs font-bold shadow"
+              title="Sarvam.ai Speech-to-Text & Voice Assistant (22 Indian Languages)"
             >
-              <Mic className="w-4 h-4" />
+              <Mic className="w-4 h-4 text-[#66BB6A]" />
+              <span className="hidden md:inline text-[11px]">Sarvam Voice</span>
             </button>
 
             <input
               type="text"
-              placeholder={isListening ? 'Listening...' : 'Ask health question or upload prescription image...'}
+              placeholder="Ask health question, type in regional script/Tanglish, or upload image..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               className="flex-1 px-3 py-2 border border-[#C8E6C9] rounded-xl text-xs focus:outline-none focus:border-[#1B5E20]"
@@ -457,7 +482,7 @@ export const AIHistoryIntakeModal: React.FC<AIHistoryIntakeModalProps> = ({ onCl
           <div className="bg-[#E8F5E9] p-2 rounded-xl text-[11px] text-[#1B5E20] flex items-center justify-between border border-[#A5D6A7]">
             <span className="font-semibold flex items-center gap-1">
               <Lock className="w-3.5 h-3.5 text-[#1B5E20]" />
-              Self-Awareness & Locker Storage Only • Private to Citizen
+              Sarvam AI (22 Indian Languages) & Vision OCR Active • Private to Citizen
             </span>
             <button onClick={onClose} className="text-[#1B5E20] font-bold underline hover:text-[#123814]">
               Close Chat
@@ -465,6 +490,21 @@ export const AIHistoryIntakeModal: React.FC<AIHistoryIntakeModalProps> = ({ onCl
           </div>
         </div>
       </div>
+
+      {showSarvamModal && (
+        <SarvamVoiceAssistantModal
+          onClose={() => setShowSarvamModal(false)}
+          onConfirmClinicalPrompt={(prompt) => {
+            const userMsg = `🎙️ [Sarvam Voice Input]: "${prompt.originalRegionalText}"`;
+            const aiMsg = `🌐 **Sarvam Translation & Clinical Intake Result**:\n\n- **English Prompt**: ${prompt.englishTranslation}\n- **Specialty**: ${prompt.structuredPrompt.suggestedSpecialty}\n- **Triage Level**: ${prompt.structuredPrompt.severity.toUpperCase()}\n- **Risk Flags**: ${prompt.structuredPrompt.riskFlags.join(', ') || 'None'}`;
+            setMessages(prev => [
+              ...prev,
+              { id: `msg-${Date.now()}`, role: 'user', text: userMsg },
+              { id: `msg-${Date.now() + 1}`, role: 'ai', text: aiMsg }
+            ]);
+          }}
+        />
+      )}
     </div>
   );
 };

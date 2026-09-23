@@ -192,7 +192,7 @@ export const LandingPage: React.FC = () => {
       {/* Footer */}
       <footer className="bg-[#071F09] text-[#A5D6A7] py-10 text-xs text-center border-t-2 border-[#1E5723]">
         <div className="container mx-auto px-4 space-y-2">
-          <p className="font-bold text-white text-sm">Government Digital Health Record & AI Clinical Intake Platform (MediKiosk)</p>
+          <p className="font-bold text-white text-sm">Government Digital Health Record & AI Clinical Intake Platform (Uyire Kavalan)</p>
           <p className="text-white font-medium">© 2026 Ministry of Health & Family Welfare • Government Healthcare Digital Infrastructure</p>
         </div>
       </footer>

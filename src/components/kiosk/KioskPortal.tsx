@@ -2,18 +2,28 @@ import React, { useState } from 'react';
 import { useHealthRecord } from '../../context/HealthRecordContext.tsx';
 import { FileText, Volume2, Globe, HeartPulse, Sparkles, Lock, CreditCard } from 'lucide-react';
 import { AIHistoryIntakeModal } from '../citizen/AIHistoryIntakeModal.tsx';
+import { SarvamVoiceAssistantModal } from '../citizen/SarvamVoiceAssistantModal.tsx';
+import { synthesizeSpeechWithSarvam } from '../../services/sarvamAiService.ts';
 
 export const KioskPortal: React.FC = () => {
   const { language, setLanguage, patient, t } = useHealthRecord();
   const [kioskStep, setKioskStep] = useState<'welcome' | 'upload' | 'idInfo'>('welcome');
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [showAwarenessModal, setShowAwarenessModal] = useState(false);
+  const [showSarvamModal, setShowSarvamModal] = useState(false);
 
   const playVoicePrompt = () => {
     setAudioPlaying(true);
+    const langCode = language === 'Tamil' ? 'ta-IN' : language === 'Hindi' ? 'hi-IN' : 'en-IN';
+    const textMap: Record<string, string> = {
+      'ta-IN': 'வணக்கம். உயிரே காவலன் கியோஸ்க்கிற்கு உங்களை வரவேற்கிறோம். தொடுதிரை அல்லது குரல் மூலம் உங்கள் விவரங்களை உள்ளிடவும்.',
+      'hi-IN': 'नमस्कार। उयिरे कावलन कियोस्क में आपका स्वागत है। टच स्क्रीन या अपनी बोली जाने वाली भाषा में विवरण दर्ज करें।',
+      'en-IN': 'Welcome to Uyire Kavalan Autonomous Health Kiosk. Select self service feature or speak in your native language.'
+    };
+    synthesizeSpeechWithSarvam(textMap[langCode] || textMap['en-IN'], langCode);
     setTimeout(() => {
       setAudioPlaying(false);
-    }, 2500);
+    }, 3200);
   };
 
   return (
@@ -36,6 +46,13 @@ export const KioskPortal: React.FC = () => {
               }`}
             >
               <Volume2 className="w-4 h-4" /> {audioPlaying ? 'Playing Audio Instruction...' : '🔊 Hear Instructions'}
+            </button>
+
+            <button
+              onClick={() => setShowSarvamModal(true)}
+              className="px-4 py-2 rounded-xl text-xs font-black bg-[#66BB6A] text-[#0A260C] hover:bg-[#52ab56] transition-all flex items-center gap-2 shadow-lg scale-[1.02]"
+            >
+              <Sparkles className="w-4 h-4 text-[#0A260C]" /> 🎙️ Sarvam AI Voice (22 Languages)
             </button>
 
             <div className="flex items-center gap-1 bg-[#123814] px-3 py-1.5 rounded-xl border border-[#27702C]">
@@ -201,6 +218,13 @@ export const KioskPortal: React.FC = () => {
       {showAwarenessModal && (
         <AIHistoryIntakeModal
           onClose={() => setShowAwarenessModal(false)}
+        />
+      )}
+
+      {/* Sarvam.ai Multilingual Voice Assistant Modal */}
+      {showSarvamModal && (
+        <SarvamVoiceAssistantModal
+          onClose={() => setShowSarvamModal(false)}
         />
       )}
     </div>

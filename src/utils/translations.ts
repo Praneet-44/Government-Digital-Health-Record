@@ -75,9 +75,9 @@ export const translations: Record<string, Record<SupportedLanguage, string>> = {
 
   // Public Landing Page
   heroTitle: {
-    English: 'MediKiosk Platform',
-    Hindi: 'मेडीकियोस्क प्लेटफॉर्म',
-    Tamil: 'மெடிகியோஸ்க் தளம்'
+    English: 'Uyire Kavalan Platform',
+    Hindi: 'उयिरे कावलन प्लेटफॉर्म',
+    Tamil: 'உயிரே காவலன் தளம்'
   },
   heroTagline: {
     English: 'One Citizen → One Permanent Health Profile → Universal Care',

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import type {
   UserRole,
   CitizenProfile,
@@ -6,10 +6,13 @@ import type {
   Allergy,
   Medication,
   DocumentItem,
-  DoctorStaff
+  DoctorStaff,
+  FhirAuditEvent
 } from '../types/health.ts';
 
 import { t as translateHelper } from '../utils/translations.ts';
+import { evaluateClinicalWithMedGemma, createFhirAuditEvent, type MedGemmaAnalysisResult } from '../services/medGemmaService.ts';
+import { loadAppState, saveAppState } from '../services/dbService.ts';
 
 interface HealthRecordContextType {
   role: UserRole;
@@ -25,6 +28,9 @@ interface HealthRecordContextType {
   verificationQueue: VerificationItem[];
   triageRedFlagsCount: number;
   doctorsList: DoctorStaff[];
+  fhirAuditLogs: FhirAuditEvent[];
+  addFhirAuditLog: (event: FhirAuditEvent) => void;
+  runMedGemmaAnalysis: (query: string) => Promise<MedGemmaAnalysisResult>;
   reportChange: (type: 'allergy' | 'medication' | 'operation' | 'condition', title: string, details: string) => void;
   verifyItem: (id: string, approve: boolean, doctorNotes?: string) => void;
   modifyAndVerifyItem: (id: string, updatedTitle: string, updatedDetails: string, severity?: 'critical' | 'important' | 'normal') => void;
@@ -111,6 +117,61 @@ export const HealthRecordProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [verificationQueue, setVerificationQueue] = useState<VerificationItem[]>([]);
   const [triageRedFlagsCount, setTriageRedFlagsCount] = useState<number>(0);
   const [notification, setNotification] = useState<string | null>(null);
+  const [hydrationCompleted, setHydrationCompleted] = useState(false);
+
+  // Hydrate from MongoDB on mount. Falls back to in-memory seed state if unreachable.
+  useEffect(() => {
+    let cancelled = false;
+    loadAppState()
+      .then(snapshot => {
+        if (cancelled) return;
+        if (snapshot.patients?.length) {
+          setAllPatients(snapshot.patients);
+          setPatient(snapshot.patients.find(p => p.permanentId === initialPatient.permanentId) || snapshot.patients[0]);
+        }
+        if (snapshot.doctors?.length) setDoctorsList(snapshot.doctors);
+        if (snapshot.verificationQueue) setVerificationQueue(snapshot.verificationQueue);
+        if (snapshot.auditLogs?.length) setFhirAuditLogs(snapshot.auditLogs);
+        if (snapshot.meta?.triageRedFlagsCount) setTriageRedFlagsCount(snapshot.meta.triageRedFlagsCount);
+      })
+      .catch(err => console.warn('MongoDB unreachable, running in-memory only:', err))
+      .finally(() => {
+        if (!cancelled) setHydrationCompleted(true);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  // Debounced persistence to MongoDB once hydration has settled.
+  useEffect(() => {
+    if (!hydrationCompleted) return;
+    const timer = setTimeout(() => {
+      saveAppState({
+        patients: allPatients,
+        doctors: doctorsList,
+        verificationQueue,
+        auditLogs: fhirAuditLogs,
+        meta: { triageRedFlagsCount }
+      }).catch(err => console.warn('MongoDB save failed:', err));
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [allPatients, doctorsList, verificationQueue, fhirAuditLogs, triageRedFlagsCount, hydrationCompleted]);
+
+  const [fhirAuditLogs, setFhirAuditLogs] = useState<FhirAuditEvent[]>([
+    createFhirAuditEvent('Patient Registration Profile Setup', 'PATIENT_TOKEN_8841', '0')
+  ]);
+
+  const addFhirAuditLog = (event: FhirAuditEvent) => {
+    setFhirAuditLogs(prev => [event, ...prev]);
+  };
+
+  const runMedGemmaAnalysis = async (query: string): Promise<MedGemmaAnalysisResult> => {
+    const result = await evaluateClinicalWithMedGemma(query, patient);
+    addFhirAuditLog(result.fhirAuditLog);
+    if (result.clinicalAssessment.triageLevel === 'critical') {
+      triggerTriageRedFlag();
+    }
+    return result;
+  };
 
   const [doctorsList, setDoctorsList] = useState<DoctorStaff[]>([
     {
@@ -559,6 +620,9 @@ export const HealthRecordProvider: React.FC<{ children: React.ReactNode }> = ({ 
         verificationQueue,
         triageRedFlagsCount,
         doctorsList,
+        fhirAuditLogs,
+        addFhirAuditLog,
+        runMedGemmaAnalysis,
         reportChange,
         verifyItem,
         modifyAndVerifyItem,

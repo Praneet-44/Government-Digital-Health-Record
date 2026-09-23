@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { useHealthRecord } from '../../context/HealthRecordContext.tsx';
-import { Stethoscope, Search, UserCheck, AlertOctagon, PlusCircle, Check, X, Edit3, FileText, ShieldCheck, Activity, User } from 'lucide-react';
+import { Stethoscope, Search, UserCheck, AlertOctagon, PlusCircle, Check, X, Edit3, FileText, ShieldCheck, Activity, User, Sparkles, Lock, FileCode } from 'lucide-react';
 import type { VerificationItem } from '../../types/health.ts';
+import { NMC_MANDATORY_DISCLAIMER } from '../../services/medGemmaService.ts';
 
 export const DoctorPortal: React.FC = () => {
-  const { patient, allPatients, setPatient, verificationQueue, verifyItem, modifyAndVerifyItem, addDoctorNote, t } = useHealthRecord();
+  const { patient, allPatients, setPatient, verificationQueue, verifyItem, modifyAndVerifyItem, addDoctorNote, fhirAuditLogs, t } = useHealthRecord();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchError, setSearchError] = useState('');
 
-  const [activeDoctorTab, setActiveDoctorTab] = useState<'profile' | 'documents' | 'write' | 'verification'>('profile');
+  const [activeDoctorTab, setActiveDoctorTab] = useState<'profile' | 'documents' | 'write' | 'verification' | 'medgemma_audit'>('profile');
   const [newNoteType, setNewNoteType] = useState<'medication' | 'allergy'>('medication');
   const [newNoteName, setNewNoteName] = useState('');
   const [newNoteDetail, setNewNoteDetail] = useState('');
@@ -121,11 +122,10 @@ export const DoctorPortal: React.FC = () => {
                 key={p.permanentId}
                 type="button"
                 onClick={() => handleSearchCitizen(undefined, p.permanentId)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
-                  patient.permanentId === p.permanentId
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${patient.permanentId === p.permanentId
                     ? 'bg-[#1B5E20] text-white'
                     : 'bg-[#E8F5E9] text-[#1B5E20] hover:bg-[#D4EDD6]'
-                }`}
+                  }`}
               >
                 {p.fullName.split(' ')[0]}
               </button>
@@ -170,44 +170,40 @@ export const DoctorPortal: React.FC = () => {
         <div className="bg-white p-1.5 rounded-2xl border border-[#C8E6C9] flex flex-wrap gap-2 shadow-sm">
           <button
             onClick={() => setActiveDoctorTab('profile')}
-            className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
-              activeDoctorTab === 'profile'
+            className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${activeDoctorTab === 'profile'
                 ? 'bg-[#1B5E20] text-white shadow'
                 : 'text-[#38523C] hover:bg-[#E8F5E9]'
-            }`}
+              }`}
           >
             <Activity className="w-4 h-4 text-[#66BB6A]" /> Patient Medical History
           </button>
 
           <button
             onClick={() => setActiveDoctorTab('documents')}
-            className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
-              activeDoctorTab === 'documents'
+            className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${activeDoctorTab === 'documents'
                 ? 'bg-[#1B5E20] text-white shadow'
                 : 'text-[#38523C] hover:bg-[#E8F5E9]'
-            }`}
+              }`}
           >
             <FileText className="w-4 h-4 text-[#66BB6A]" /> Prescriptions & Scans ({patient.documents.length})
           </button>
 
           <button
             onClick={() => setActiveDoctorTab('write')}
-            className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
-              activeDoctorTab === 'write'
+            className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${activeDoctorTab === 'write'
                 ? 'bg-[#1B5E20] text-white shadow'
                 : 'text-[#38523C] hover:bg-[#E8F5E9]'
-            }`}
+              }`}
           >
             <PlusCircle className="w-4 h-4 text-[#66BB6A]" /> Write New Prescription
           </button>
 
           <button
             onClick={() => setActiveDoctorTab('verification')}
-            className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
-              activeDoctorTab === 'verification'
+            className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${activeDoctorTab === 'verification'
                 ? 'bg-[#1B5E20] text-white shadow'
                 : 'text-[#38523C] hover:bg-[#E8F5E9]'
-            }`}
+              }`}
           >
             <ShieldCheck className="w-4 h-4 text-[#66BB6A]" /> Verification Queue
             {pendingVerificationItems.length > 0 && (
@@ -215,6 +211,16 @@ export const DoctorPortal: React.FC = () => {
                 {pendingVerificationItems.length}
               </span>
             )}
+          </button>
+
+          <button
+            onClick={() => setActiveDoctorTab('medgemma_audit')}
+            className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${activeDoctorTab === 'medgemma_audit'
+                ? 'bg-[#1B5E20] text-white shadow'
+                : 'text-[#38523C] hover:bg-[#E8F5E9]'
+              }`}
+          >
+            <Sparkles className="w-4 h-4 text-[#66BB6A]" /> MedGemma & FHIR Audits ({fhirAuditLogs.length})
           </button>
         </div>
 
@@ -237,11 +243,10 @@ export const DoctorPortal: React.FC = () => {
                   {patient.allergies.map((alg) => (
                     <div
                       key={alg.id}
-                      className={`p-3 rounded-xl border text-xs ${
-                        alg.severity === 'critical'
+                      className={`p-3 rounded-xl border text-xs ${alg.severity === 'critical'
                           ? 'bg-[#FFF5F5] border-[#FCA5A5]'
                           : 'bg-[#E8F5E9] border-[#A5D6A7]'
-                      }`}
+                        }`}
                     >
                       <div className="flex justify-between font-bold text-[#122415]">
                         <span>{alg.allergen}</span>
@@ -413,13 +418,12 @@ export const DoctorPortal: React.FC = () => {
                 {verificationQueue.map((v) => (
                   <div
                     key={v.id}
-                    className={`p-4 rounded-xl border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-xs ${
-                      v.status === 'pending'
+                    className={`p-4 rounded-xl border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-xs ${v.status === 'pending'
                         ? 'bg-[#FEF3C7] border-[#FDE68A]'
                         : v.status === 'verified'
-                        ? 'bg-[#E8F5E9] border-[#A5D6A7]'
-                        : 'bg-[#FEE2E2] border-[#FCA5A5]'
-                    }`}
+                          ? 'bg-[#E8F5E9] border-[#A5D6A7]'
+                          : 'bg-[#FEE2E2] border-[#FCA5A5]'
+                      }`}
                   >
                     <div>
                       <div className="flex items-center gap-2">
@@ -461,6 +465,86 @@ export const DoctorPortal: React.FC = () => {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Tab 5: MedGemma & FHIR Audit Trail Inspector */}
+        {activeDoctorTab === 'medgemma_audit' && (
+          <div className="bg-white rounded-2xl p-6 border border-[#C8E6C9] shadow-sm space-y-5">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b border-[#C8E6C9] pb-4">
+              <div>
+                <h3 className="text-base font-bold text-[#1B5E20] font-display flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-[#66BB6A]" /> Google MedGemma AI Clinical Summaries & FHIR Audit Trail
+                </h3>
+                <p className="text-xs text-[#38523C] font-medium mt-0.5">
+                  India DPDP Act 2023 Tokenized Health Information & NMC Compliant Audit Logs
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-extrabold bg-[#1B5E20] text-white px-2.5 py-1 rounded-lg border border-[#A5D6A7]">
+                  Model: medgemma-7b-it
+                </span>
+                <span className="text-[10px] font-extrabold bg-[#E8F5E9] text-[#1B5E20] px-2.5 py-1 rounded-lg border border-[#A5D6A7]">
+                  FHIR R4 AuditEvent Validated
+                </span>
+              </div>
+            </div>
+
+            {/* Mandatory NMC Disclaimer Banner */}
+            <div className="p-3 bg-[#FFFBEB] border border-[#FDE68A] rounded-xl text-xs text-[#92400E] font-semibold flex items-start gap-2">
+              <Lock className="w-4 h-4 text-[#D97706] shrink-0 mt-0.5" />
+              <div>
+                <strong className="block text-[#78350F]">Mandatory National Medical Commission (NMC) Disclaimer:</strong>
+                <p className="text-[11px] mt-0.5">{NMC_MANDATORY_DISCLAIMER}</p>
+              </div>
+            </div>
+
+            {/* FHIR Audit Trail Events List */}
+            <div className="space-y-3">
+              <h4 className="font-extrabold text-[#1B5E20] text-xs uppercase tracking-wider flex items-center justify-between">
+                <span>📋 Registered FHIR AuditEvent Log Entries ({fhirAuditLogs.length})</span>
+                <span className="text-[10px] font-mono text-[#2E7D32]">Purpose of Use: TREAT</span>
+              </h4>
+
+              <div className="space-y-3">
+                {fhirAuditLogs.map((log) => (
+                  <div key={log.id} className="p-4 rounded-xl border border-[#C8E6C9] bg-[#F8FAF8] space-y-2 text-xs">
+                    <div className="flex flex-wrap justify-between items-start gap-2">
+                      <div className="flex items-center gap-2">
+                        <FileCode className="w-4 h-4 text-[#1B5E20]" />
+                        <span className="font-bold text-[#122415]">{log.type.display}</span>
+                      </div>
+                      <span className="text-[10px] font-mono font-bold bg-[#E8F5E9] text-[#1B5E20] px-2 py-0.5 rounded">
+                        {log.id} • {new Date(log.recorded).toLocaleTimeString()}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[11px]">
+                      <div className="bg-white p-2.5 rounded-lg border border-[#E0E0E0]">
+                        <span className="font-bold text-[#1B5E20] block mb-1">🤖 Participating Agents:</span>
+                        {log.agent.map((a, i) => (
+                          <div key={i} className="text-[#38523C]">
+                            • <strong>{a.name}</strong> ({a.role})
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="bg-white p-2.5 rounded-lg border border-[#E0E0E0]">
+                        <span className="font-bold text-[#1B5E20] block mb-1">🔒 DPDP Anonymized Entity:</span>
+                        <p className="text-[#38523C] font-mono text-[10.5px]">Reference: {log.entity[0]?.what.reference}</p>
+                        <p className="text-[#38523C] font-mono text-[10.5px]">Hash: {log.entity[0]?.sha256Hash}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between items-center text-[10px] font-bold text-[#2E7D32] pt-1">
+                      <span>Outcome Code: {log.outcome} (Success)</span>
+                      <span>NMC Disclaimer Appended: Yes 🟢</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
       </div>

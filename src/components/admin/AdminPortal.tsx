@@ -3,7 +3,7 @@ import { useHealthRecord } from '../../context/HealthRecordContext.tsx';
 import { Building2, ShieldCheck, UserPlus, Stethoscope, KeyRound, UserCheck } from 'lucide-react';
 
 export const AdminPortal: React.FC = () => {
-  const { allPatients, verificationQueue, triageRedFlagsCount, doctorsList, onboardNewDoctor } = useHealthRecord();
+  const { allPatients, verificationQueue, triageRedFlagsCount, doctorsList, onboardNewDoctor, fhirAuditLogs } = useHealthRecord();
   const [showAddDoctorModal, setShowAddDoctorModal] = useState(false);
 
   // New Doctor Onboarding Form State
@@ -178,22 +178,43 @@ export const AdminPortal: React.FC = () => {
           </div>
         </div>
 
-        {/* System Security Audit Logs */}
+        {/* System Security & FHIR Audit Logs (India DPDP Act 2023 Compliant) */}
         <div className="bg-white rounded-2xl p-6 border border-[#C8E6C9] shadow-sm space-y-4">
-          <h3 className="text-lg font-bold text-[#1B5E20] font-display flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-[#66BB6A]" /> System Access Audit Log Trace
-          </h3>
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-bold text-[#1B5E20] font-display flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5 text-[#66BB6A]" /> FHIR R4 Audit Event & DPDP Compliance Logs
+            </h3>
+            <span className="text-[10px] font-extrabold bg-[#1B5E20] text-white px-3 py-1 rounded-full uppercase">
+              DPDP Act 2023 Tokenized
+            </span>
+          </div>
 
-          <div className="space-y-3 text-xs">
-            <div className="p-3 rounded-xl bg-[#F4F9F5] border border-[#E0F2E1] flex justify-between items-center">
-              <div>
-                <strong className="text-[#122415]">Admin Portal</strong> onboarded authorized physician <strong className="font-mono text-[#1B5E20]">Dr. R. K. Sharma (MD)</strong>
-                <span className="text-[10px] text-gray-500 block">License #GOV-MED-44109 • Active Login Account Created</span>
+          <div className="space-y-3 text-xs max-h-72 overflow-y-auto pr-1">
+            {fhirAuditLogs.map((log) => (
+              <div key={log.id} className="p-3.5 rounded-xl bg-[#F4F9F5] border border-[#C8E6C9] space-y-1.5 font-mono">
+                <div className="flex justify-between items-center">
+                  <span className="font-extrabold text-[#1B5E20] text-[11px]">{log.type.display}</span>
+                  <span className="text-[10px] text-gray-500">{log.recorded}</span>
+                </div>
+                <p className="text-[10.5px] text-[#38523C]">
+                  <strong>Agent:</strong> {log.agent.map(a => `${a.name} (${a.role})`).join(' • ')}
+                </p>
+                <p className="text-[10.5px] text-[#1E40AF]">
+                  <strong>Entity / Ref:</strong> {log.entity[0]?.what.display} | Hash: {log.entity[0]?.sha256Hash}
+                </p>
+                <div className="flex gap-2 text-[9.5px] pt-1">
+                  <span className="bg-[#E8F5E9] text-[#1B5E20] px-2 py-0.5 rounded font-bold border border-[#A5D6A7]">
+                    DPDP Tokenized: YES
+                  </span>
+                  <span className="bg-[#EFF6FF] text-[#1D4ED8] px-2 py-0.5 rounded font-bold border border-[#BFDBFE]">
+                    NMC Disclaimer: Appended
+                  </span>
+                  <span className="bg-[#FFFBEB] text-[#D97706] px-2 py-0.5 rounded font-bold border border-[#FDE68A]">
+                    Purpose: TREAT
+                  </span>
+                </div>
               </div>
-              <span className="text-[10px] font-bold text-[#1B5E20] bg-[#E8F5E9] px-2 py-0.5 rounded">
-                Verified Staff
-              </span>
-            </div>
+            ))}
           </div>
         </div>
       </div>

@@ -144,3 +144,43 @@ export interface DoctorStaff {
   status: 'active' | 'inactive';
 }
 
+export interface FhirAuditEvent {
+  resourceType: 'AuditEvent';
+  id: string;
+  type: {
+    system: 'http://terminology.hl7.org/CodeSystem/audit-event-type';
+    code: 'rest' | 'clinical-reasoning' | 'ai-triage';
+    display: string;
+  };
+  action: 'E' | 'C' | 'R'; // Execute, Create, Read
+  recorded: string;
+  outcome: '0' | '4' | '8'; // 0 = Success
+  purposeOfUse: {
+    system: 'http://terminology.hl7.org/CodeSystem/v3-ActReason';
+    code: 'TREAT';
+    display: 'Clinical Triage & Patient Care';
+  };
+  agent: {
+    name: string;
+    role: string;
+    requestor: boolean;
+  }[];
+  source: {
+    observer: {
+      display: string;
+    };
+    site: string;
+  };
+  entity: {
+    what: {
+      reference: string;
+      display: string;
+    };
+    type: string;
+    dpdpAnonymized: boolean;
+    sha256Hash: string;
+  }[];
+  nmcDisclaimerAppended: boolean;
+}
+
+
