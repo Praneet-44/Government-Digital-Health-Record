@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useHealthRecord } from '../../context/HealthRecordContext.tsx';
+import { HOSPITALS, getHospitalById } from '../../utils/hospitals.ts';
 import { Building2, ShieldCheck, UserPlus, Stethoscope, KeyRound, UserCheck } from 'lucide-react';
 
 export const AdminPortal: React.FC = () => {
@@ -10,7 +11,7 @@ export const AdminPortal: React.FC = () => {
   const [docName, setDocName] = useState('');
   const [docLicense, setDocLicense] = useState('');
   const [docDepartment, setDocDepartment] = useState('General Medicine');
-  const [docFacility, setDocFacility] = useState('District Hospital OPD');
+  const [docHospitalId, setDocHospitalId] = useState('dh-opd');
   const [docUsername, setDocUsername] = useState('');
   const [docPassword, setDocPassword] = useState('DocPass@2026');
 
@@ -21,7 +22,7 @@ export const AdminPortal: React.FC = () => {
     setDocName('');
     setDocLicense(`GOV-MED-${Math.floor(10000 + Math.random() * 90000)}`);
     setDocDepartment('General Medicine');
-    setDocFacility('District Hospital OPD');
+    setDocHospitalId('dh-opd');
     setDocUsername('');
     setDocPassword('DocPass@2026');
     setShowAddDoctorModal(true);
@@ -30,7 +31,8 @@ export const AdminPortal: React.FC = () => {
   const handleOnboardSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!docName || !docLicense || !docUsername) return;
-    onboardNewDoctor(docName, docLicense, docDepartment, docFacility, docUsername);
+    const hospital = getHospitalById(docHospitalId);
+    onboardNewDoctor(docName, docLicense, docDepartment, hospital?.name ?? 'District Hospital OPD', docUsername, docHospitalId);
     setShowAddDoctorModal(false);
   };
 
@@ -134,7 +136,7 @@ export const AdminPortal: React.FC = () => {
 
                 <div className="text-xs space-y-1 text-[#38523C] pt-1">
                   <p><strong>Department:</strong> {doc.department}</p>
-                  <p><strong>Facility:</strong> {doc.facility}</p>
+                  <p><strong>Hospital:</strong> {doc.facility} <span className="font-mono text-[#0F766E]">({getHospitalById(doc.hospitalId)?.code ?? '—'})</span></p>
                   <p className="font-mono text-[#1B5E20] bg-white p-1.5 rounded border border-[#A5D6A7] font-semibold text-[11px] flex items-center justify-between">
                     <span>🔑 Username: {doc.username}</span>
                     <span className="text-[9px] text-[#2E7D32]">Access Granted</span>
@@ -277,16 +279,15 @@ export const AdminPortal: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#122415] mb-1">Assigned Healthcare Facility</label>
+                <label className="block text-xs font-bold text-[#122415] mb-1">Select Hospital / Assigned Facility</label>
                 <select
-                  value={docFacility}
-                  onChange={(e) => setDocFacility(e.target.value)}
+                  value={docHospitalId}
+                  onChange={(e) => setDocHospitalId(e.target.value)}
                   className="w-full px-3 py-2 border border-[#C8E6C9] rounded-lg text-sm font-semibold"
                 >
-                  <option value="District Hospital OPD">District Hospital OPD</option>
-                  <option value="Primary Health Centre (PHC)">Primary Health Centre (PHC)</option>
-                  <option value="Community Health Centre (CHC)">Community Health Centre (CHC)</option>
-                  <option value="Government Medical College">Government Medical College</option>
+                  {HOSPITALS.map(h => (
+                    <option key={h.id} value={h.id}>{h.name} ({h.code} • {h.type})</option>
+                  ))}
                 </select>
               </div>
 

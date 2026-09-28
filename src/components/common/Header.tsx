@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useHealthRecord } from '../../context/HealthRecordContext.tsx';
 import type { UserRole } from '../../types/health.ts';
-import { ShieldCheck, Stethoscope, User, Monitor, UserPlus, Building2, Globe, HeartPulse, Mic, Sparkles } from 'lucide-react';
+import { ShieldCheck, Stethoscope, User, Monitor, UserPlus, Building2, Globe, HeartPulse, Mic, Cross } from 'lucide-react';
 import { SarvamVoiceAssistantModal } from '../citizen/SarvamVoiceAssistantModal.tsx';
 
 export const Header: React.FC = () => {
@@ -14,6 +14,7 @@ export const Header: React.FC = () => {
     { key: 'doctor', label: t('doctorPortal'), icon: <Stethoscope className="w-4 h-4" /> },
     { key: 'kiosk', label: t('healthKiosk'), icon: <Monitor className="w-4 h-4" /> },
     { key: 'operator', label: t('registration'), icon: <UserPlus className="w-4 h-4" /> },
+    { key: 'hospital', label: t('hospitalPortal'), icon: <Cross className="w-4 h-4" /> },
     { key: 'admin', label: t('govtAdmin'), icon: <Building2 className="w-4 h-4" /> }
   ];
 
@@ -95,7 +96,7 @@ export const Header: React.FC = () => {
       </div>
 
       {/* Patient Indicator Sub-Bar */}
-      {role !== 'public' && role !== 'admin' && (
+      {role !== 'public' && role !== 'admin' && role !== 'hospital' && (
         <div className="bg-[#144517] px-4 py-2 border-t border-[#27702C] text-xs text-white flex flex-wrap justify-between items-center gap-2 font-medium">
           <div className="flex items-center gap-3">
             <span className="font-bold text-white text-sm">{t('activePatient')}: {patient.fullName}</span>

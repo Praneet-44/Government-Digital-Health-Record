@@ -2,20 +2,16 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Mic,
   MicOff,
-  Volume2,
   Globe,
   Sparkles,
   CheckCircle,
-  FileText,
   Activity,
-  ArrowRight,
   Play,
   Pause,
-  Layers,
   Wand2,
   Lock,
-  RotateCcw,
-  Zap
+  Zap,
+  ExternalLink
 } from 'lucide-react';
 import {
   SCHEDULED_INDIAN_LANGUAGES,
@@ -26,7 +22,7 @@ import {
   type StructuredClinicalPrompt,
   type IndianLanguageOption
 } from '../../services/sarvamAiService.ts';
-import { evaluateClinicalWithMedGemma, NMC_MANDATORY_DISCLAIMER } from '../../services/medGemmaService.ts';
+import { evaluateClinicalWithMedGemma } from '../../services/medGemmaService.ts';
 import { useHealthRecord } from '../../context/HealthRecordContext.tsx';
 
 interface SarvamVoiceAssistantModalProps {
@@ -47,6 +43,7 @@ export const SarvamVoiceAssistantModal: React.FC<SarvamVoiceAssistantModalProps>
   const [sttResult, setSttResult] = useState<SaarasTranscriptionResult | null>(null);
   const [clinicalResult, setClinicalResult] = useState<StructuredClinicalPrompt | null>(null);
   const [medGemmaOutputText, setMedGemmaOutputText] = useState<string>('');
+  const [webSources, setWebSources] = useState<import('../../services/medGemmaService.ts').WebSearchSource[]>([]);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [customInputText, setCustomInputText] = useState('');
 
@@ -132,6 +129,9 @@ export const SarvamVoiceAssistantModal: React.FC<SarvamVoiceAssistantModalProps>
     setProcessingStage('medgemma_reasoning');
     const medGemmaRes = await evaluateClinicalWithMedGemma(translated.englishTranslation, patient);
     setMedGemmaOutputText(medGemmaRes.formattedResponseText);
+    if (medGemmaRes.webSearchSources) {
+      setWebSources(medGemmaRes.webSearchSources);
+    }
     addFhirAuditLog(medGemmaRes.fhirAuditLog);
 
     // Step 4: Sarvam TTS Audio Synthesis
@@ -440,6 +440,38 @@ export const SarvamVoiceAssistantModal: React.FC<SarvamVoiceAssistantModalProps>
                     <pre className="text-xs text-[#581C87] font-mono whitespace-pre-wrap leading-relaxed bg-white p-3 rounded-lg border border-[#E9D5FF]">
                       {medGemmaOutputText}
                     </pre>
+
+                    {/* Live Online Medical Web Search Grounding Citations */}
+                    {webSources && webSources.length > 0 && (
+                      <div className="mt-3 p-3 bg-white rounded-xl border border-[#DDD6FE] space-y-2 text-[#122415]">
+                        <div className="flex justify-between items-center border-b border-[#E9D5FF] pb-1.5">
+                          <span className="font-extrabold text-[11px] text-[#6B21A8] flex items-center gap-1.5">
+                            <Globe className="w-3.5 h-3.5 text-[#7C3AED]" /> Live Online Web Search Grounded Literature
+                          </span>
+                          <span className="text-[9px] font-bold bg-[#F5F3FF] text-[#7C3AED] px-2 py-0.5 rounded border border-[#DDD6FE]">
+                            Live PubMed & Wikipedia APIs
+                          </span>
+                        </div>
+
+                        <div className="space-y-1.5 text-[10.5px]">
+                          {webSources.map((src, i) => (
+                            <div key={i} className="p-2 bg-[#FAF5FF] rounded-lg border border-[#F3E8FF] space-y-0.5">
+                              <a
+                                href={src.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="font-bold text-[#1D4ED8] hover:underline flex items-center gap-1"
+                              >
+                                <span>{src.title}</span>
+                                <ExternalLink className="w-3 h-3 text-[#1D4ED8] shrink-0" />
+                              </a>
+                              <p className="text-[#38523C] text-[10px]">{src.snippet}</p>
+                              <span className="text-[9px] font-mono text-gray-500 block">Source: {src.source}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 

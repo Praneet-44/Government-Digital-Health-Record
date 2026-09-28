@@ -15,7 +15,8 @@ export interface AppStateSnapshot {
 export async function loadAppState(): Promise<AppStateSnapshot> {
   const res = await fetch('/api/state');
   if (!res.ok) {
-    throw new Error(`MongoDB load failed: ${res.status}`);
+    const errBody = await res.json().catch(() => ({}));
+    throw new Error(errBody.error || `MongoDB load failed: ${res.status}`);
   }
   return res.json();
 }
@@ -31,6 +32,7 @@ export async function saveAppState(snapshot: AppStateSnapshot): Promise<void> {
     body: JSON.stringify(snapshot),
   });
   if (!res.ok) {
-    throw new Error(`MongoDB save failed: ${res.status}`);
+    const errBody = await res.json().catch(() => ({}));
+    throw new Error(errBody.error || `MongoDB save failed: ${res.status}`);
   }
 }

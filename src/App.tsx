@@ -8,6 +8,7 @@ import { DoctorPortal } from './components/doctor/DoctorPortal.tsx';
 import { KioskPortal } from './components/kiosk/KioskPortal.tsx';
 import { OperatorPortal } from './components/operator/OperatorPortal.tsx';
 import { AdminPortal } from './components/admin/AdminPortal.tsx';
+import { HospitalPortal } from './components/hospital/HospitalPortal.tsx';
 
 const MainRouter: React.FC = () => {
   const { role } = useHealthRecord();
@@ -22,6 +23,7 @@ const MainRouter: React.FC = () => {
         {role === 'kiosk' && <KioskPortal />}
         {role === 'operator' && <OperatorPortal />}
         {role === 'admin' && <AdminPortal />}
+        {role === 'hospital' && <HospitalPortal />}
       </main>
       <NotificationBanner />
     </div>

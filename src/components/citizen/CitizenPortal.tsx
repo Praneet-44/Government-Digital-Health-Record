@@ -8,6 +8,7 @@ import { ConsentAccessView } from './ConsentAccessView.tsx';
 import { HealthTimelineView } from './HealthTimelineView.tsx';
 import { ReportChangeModal } from './ReportChangeModal.tsx';
 import { AIHistoryIntakeModal } from './AIHistoryIntakeModal.tsx';
+import { MentalWellnessAssessment } from './MentalWellnessAssessment.tsx';
 import type { AIMode } from './AIHistoryIntakeModal.tsx';
 import { LayoutDashboard, User, AlertOctagon, Pill, Activity, FileText, Calendar, Lock, Edit3, PhoneCall, Scale } from 'lucide-react';
 
@@ -15,6 +16,7 @@ export const CitizenPortal: React.FC = () => {
   const { activeTab, setActiveTab, patient, updateVitalsAndContact, t } = useHealthRecord();
   const [showReportModal, setShowReportModal] = useState(false);
   const [showAIModal, setShowAIModal] = useState(false);
+  const [showWellnessModal, setShowWellnessModal] = useState(false);
   const [aiModalMode, setAiModalMode] = useState<AIMode>('awareness');
 
   // Edit Vitals & Emergency Contact Modal State
@@ -95,6 +97,7 @@ export const CitizenPortal: React.FC = () => {
             onOpenReportModal={() => setShowReportModal(true)}
             onOpenAIIntake={(mode?: AIMode) => handleOpenAiModal(mode || 'doctorIntake')}
             onOpenAIAwareness={() => handleOpenAiModal('awareness')}
+            onOpenMentalWellness={() => setShowWellnessModal(true)}
           />
         )}
 
@@ -207,6 +210,8 @@ export const CitizenPortal: React.FC = () => {
             initialMode={aiModalMode}
           />
         )}
+
+        {showWellnessModal && <MentalWellnessAssessment onClose={() => setShowWellnessModal(false)} />}
 
         {/* Edit Height, Weight & Emergency Contact Modal */}
         {showEditVitalsModal && (

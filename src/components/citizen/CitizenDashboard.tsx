@@ -1,28 +1,65 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useHealthRecord } from '../../context/HealthRecordContext';
-import { AlertOctagon, Pill, Activity, FileText, Calendar, ShieldCheck, ArrowRight, Bot, PlusCircle } from 'lucide-react';
+import { WEATHER_ADVISORIES } from '../../utils/weather.ts';
+import { AlertOctagon, Pill, Activity, FileText, Calendar, ShieldCheck, ArrowRight, Bot, PlusCircle, BellRing, X } from 'lucide-react';
 
 interface CitizenDashboardProps {
   onNavigateTab: (tab: string) => void;
   onOpenReportModal: () => void;
-  onOpenAIIntake: () => void;
+  onOpenAIIntake?: () => void;
   onOpenAIAwareness: () => void;
+  onOpenMentalWellness: () => void;
 }
 
 export const CitizenDashboard: React.FC<CitizenDashboardProps> = ({
   onNavigateTab,
   onOpenReportModal,
-  onOpenAIIntake,
-  onOpenAIAwareness
+  onOpenAIIntake: _onOpenAIIntake,
+  onOpenAIAwareness,
+  onOpenMentalWellness
 }) => {
-  const { patient, t } = useHealthRecord();
+  const { patient, t, weatherAlert } = useHealthRecord();
+  const [hideWeatherBanner, setHideWeatherBanner] = useState(false);
 
   const criticalAllergies = patient.allergies.filter(a => a.severity === 'critical');
   const activeMeds = patient.medications.filter(m => m.status === 'active');
   const verifiedMeds = activeMeds.filter(m => m.clinicalStatus === 'verified');
 
+  const weatherAdvisory = weatherAlert ? WEATHER_ADVISORIES[weatherAlert.condition] : null;
+  const showWeatherBanner = !hideWeatherBanner && weatherAlert && weatherAdvisory &&
+    weatherAlert.hospitalId === patient.registeredHospitalId;
+
   return (
     <div className="space-y-6">
+      {/* Dynamic Weather Health Alert Banner (In-Portal Notification) */}
+      {showWeatherBanner && weatherAdvisory && weatherAlert && (
+        <div
+          className="rounded-2xl p-4 border-2 shadow-md flex items-start gap-3 relative"
+          style={{ background: weatherAdvisory.bannerBg, borderColor: weatherAdvisory.bannerBorder }}
+        >
+          <BellRing className="w-6 h-6 shrink-0 mt-0.5" style={{ color: weatherAdvisory.bannerText }} />
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-extrabold flex items-center gap-2 flex-wrap" style={{ color: weatherAdvisory.bannerText }}>
+              <span className="text-lg">{weatherAdvisory.emoji}</span> {weatherAdvisory.subject}
+              <span className="bg-white/70 text-[9px] font-black px-2 py-0.5 rounded-full border uppercase">
+                In-Portal Alert
+              </span>
+            </div>
+            <p className="text-xs mt-1 font-medium" style={{ color: weatherAdvisory.bannerText }}>{weatherAdvisory.message}</p>
+            <p className="text-[10px] mt-1.5 font-semibold" style={{ color: weatherAdvisory.bannerText }}>
+              💬 Delivered to your registered mobile & email by {weatherAlert.hospitalName ?? 'your hospital'} • {new Date(weatherAlert.issuedAt).toLocaleString()}
+            </p>
+          </div>
+          <button
+            onClick={() => setHideWeatherBanner(true)}
+            className="shrink-0 p-1 rounded-lg hover:bg-black/10 transition-all"
+            aria-label="Dismiss weather alert"
+          >
+            <X className="w-4 h-4" style={{ color: weatherAdvisory.bannerText }} />
+          </button>
+        </div>
+      )}
+
       {/* Welcome Banner */}
       <div className="bg-gradient-to-r from-[#1B5E20] to-[#2E7D32] text-white rounded-2xl p-6 shadow-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -206,6 +243,14 @@ export const CitizenDashboard: React.FC<CitizenDashboardProps> = ({
           >
             <div className="font-bold text-sm mb-1 text-[#66BB6A]">💡 Public Health AI</div>
             <span className="text-[11px] text-[#A5D6A7]">Self-Awareness & Vision OCR</span>
+          </button>
+
+          <button
+            onClick={onOpenMentalWellness}
+            className="p-4 rounded-xl border-2 border-[#0284c7] bg-[#0c4a6e] text-white hover:bg-[#082f49] transition-all text-left flex flex-col justify-between"
+          >
+            <div className="font-bold text-sm mb-1 text-[#38bdf8]">🧠 Mental Wellness</div>
+            <span className="text-[11px] text-[#bae6fd]">Trauma & Stress Self-Care Check</span>
           </button>
         </div>
       </div>

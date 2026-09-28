@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useHealthRecord } from '../../context/HealthRecordContext.tsx';
-import { UserPlus, Search, ShieldCheck, CheckCircle2, KeyRound, Info } from 'lucide-react';
+import { HOSPITALS, getHospitalById } from '../../utils/hospitals.ts';
+import { UserPlus, Search, ShieldCheck, CheckCircle2, KeyRound, Info, Building2 } from 'lucide-react';
 
 export const OperatorPortal: React.FC = () => {
   const { allPatients, registerNewCitizen, setRole } = useHealthRecord();
@@ -15,6 +16,7 @@ export const OperatorPortal: React.FC = () => {
   const [newGender, setNewGender] = useState<'Male' | 'Female' | 'Other'>('Male');
   const [newBloodGroup, setNewBloodGroup] = useState('B+');
   const [newAadhaar, setNewAadhaar] = useState('');
+  const [newHospitalId, setNewHospitalId] = useState('dh-opd');
   
   // OTP Verification Flow State
   const [regStep, setRegStep] = useState<'details' | 'otp'>('details');
@@ -61,7 +63,8 @@ export const OperatorPortal: React.FC = () => {
       newDob || '01 Jan 1996',
       newGender,
       newBloodGroup,
-      newAadhaar
+      newAadhaar,
+      newHospitalId
     );
 
     setCreatedProfileResult(result);
@@ -81,6 +84,7 @@ export const OperatorPortal: React.FC = () => {
     setNewMobile('');
     setNewAadhaar('');
     setNewDob('15 Aug 1995');
+    setNewHospitalId('dh-opd');
   };
 
   return (
@@ -199,6 +203,7 @@ export const OperatorPortal: React.FC = () => {
               <p><strong>Permanent Health ID:</strong> <span className="font-mono font-bold text-[#1B5E20]">{createdProfileResult.profile.permanentId}</span></p>
               <p><strong>ABHA Number:</strong> <span className="font-mono font-bold">{createdProfileResult.profile.abhaId}</span></p>
               <p><strong>Verified Aadhaar:</strong> <span className="font-mono font-bold text-[#1B5E20]">{createdProfileResult.profile.aadhaarNumber}</span></p>
+              <p><strong>Home Facility:</strong> <span className="font-bold text-[#1B5E20]">{getHospitalById(createdProfileResult.profile.registeredHospitalId)?.name ?? createdProfileResult.profile.address}</span></p>
             </div>
 
             <div className="text-center pt-2">
@@ -282,6 +287,24 @@ export const OperatorPortal: React.FC = () => {
                         className="w-full px-3 py-2 border border-[#C8E6C9] rounded-lg text-sm"
                       />
                     </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#122415] mb-1 flex items-center gap-1">
+                      <Building2 className="w-3.5 h-3.5 text-[#1B5E20]" /> Select Registration Facility / Hospital
+                    </label>
+                    <select
+                      value={newHospitalId}
+                      onChange={(e) => setNewHospitalId(e.target.value)}
+                      className="w-full px-3 py-2 border-2 border-[#1B5E20] rounded-lg text-sm font-bold bg-[#F4F9F5]"
+                    >
+                      {HOSPITALS.map(h => (
+                        <option key={h.id} value={h.id}>{h.name} ({h.code} • {h.type})</option>
+                      ))}
+                    </select>
+                    <span className="text-[10px] text-[#2E7D32] font-semibold block mt-0.5">
+                      The citizen's home facility is recorded on the permanent health profile.
+                    </span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">

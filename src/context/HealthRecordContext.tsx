@@ -7,10 +7,14 @@ import type {
   Medication,
   DocumentItem,
   DoctorStaff,
-  FhirAuditEvent
+  FhirAuditEvent,
+  TimelineEvent,
+  MentalWellnessResult
 } from '../types/health.ts';
 
 import { t as translateHelper } from '../utils/translations.ts';
+import { getHospitalById } from '../utils/hospitals.ts';
+import type { WeatherCondition, DeliveryChannel, WeatherAlertBroadcast } from '../utils/weather.ts';
 import { evaluateClinicalWithMedGemma, createFhirAuditEvent, type MedGemmaAnalysisResult } from '../services/medGemmaService.ts';
 import { loadAppState, saveAppState } from '../services/dbService.ts';
 
@@ -53,11 +57,15 @@ interface HealthRecordContextType {
   ) => void;
   addDoctorNote: (type: 'medication' | 'allergy' | 'condition', name: string, detail: string) => void;
   updateVitalsAndContact: (height: string, weight: string, emergencyContact: { name: string; relation: string; mobile: string }) => void;
-  registerNewCitizen: (name: string, mobile: string, dob: string, gender: 'Male' | 'Female' | 'Other', bloodGroup: string, aadhaarNumber: string) => { profile: CitizenProfile; isExisting: boolean };
-  onboardNewDoctor: (name: string, licenseNumber: string, department: string, facility: string, username: string) => void;
+  registerNewCitizen: (name: string, mobile: string, dob: string, gender: 'Male' | 'Female' | 'Other', bloodGroup: string, aadhaarNumber: string, hospitalId?: string) => { profile: CitizenProfile; isExisting: boolean };
+  onboardNewDoctor: (name: string, licenseNumber: string, department: string, facility: string, username: string, hospitalId?: string) => void;
+  recordMentalWellness: (result: MentalWellnessResult) => void;
   triggerTriageRedFlag: () => void;
   notification: string | null;
   setNotification: (msg: string | null) => void;
+  weatherAlert: WeatherAlertBroadcast | null;
+  issueWeatherAlert: (condition: WeatherCondition, channels: DeliveryChannel[], hospitalId?: string, hospitalName?: string) => void;
+  clearWeatherAlert: () => void;
 }
 
 // Clean Initial Citizen Profile (Starting fresh with 1 primary profile)
@@ -73,6 +81,7 @@ const initialPatient: CitizenProfile = {
   weight: '72 kg',
   mobile: '+91 98765 43210',
   address: 'H.No 42, Sector 4, Government Hospital Ward',
+  registeredHospitalId: 'dh-opd',
   emergencyContact: {
     name: 'Sunita Kumar',
     relation: 'Spouse',
@@ -117,7 +126,37 @@ export const HealthRecordProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [verificationQueue, setVerificationQueue] = useState<VerificationItem[]>([]);
   const [triageRedFlagsCount, setTriageRedFlagsCount] = useState<number>(0);
   const [notification, setNotification] = useState<string | null>(null);
+  const [weatherAlert, setWeatherAlert] = useState<WeatherAlertBroadcast | null>(null);
   const [hydrationCompleted, setHydrationCompleted] = useState(false);
+
+  const [fhirAuditLogs, setFhirAuditLogs] = useState<FhirAuditEvent[]>([
+    createFhirAuditEvent('Patient Registration Profile Setup', 'PATIENT_TOKEN_8841', '0')
+  ]);
+
+  const [doctorsList, setDoctorsList] = useState<DoctorStaff[]>([
+    {
+      id: 'doc-1',
+      fullName: 'Dr. R. K. Sharma (MD)',
+      licenseNumber: 'GOV-MED-44109',
+      department: 'General Medicine',
+      facility: 'District Hospital OPD',
+      hospitalId: 'dh-opd',
+      username: 'dr.rk.sharma',
+      joinedDate: '10 Jan 2026',
+      status: 'active'
+    },
+    {
+      id: 'doc-2',
+      fullName: 'Dr. Priya Nair (MD)',
+      licenseNumber: 'GOV-MED-55912',
+      department: 'Pediatrics & Triage',
+      facility: 'Primary Health Centre (PHC)',
+      hospitalId: 'phc-urban',
+      username: 'dr.priya.nair',
+      joinedDate: '01 Feb 2026',
+      status: 'active'
+    }
+  ]);
 
   // Hydrate from MongoDB on mount. Falls back to in-memory seed state if unreachable.
   useEffect(() => {
@@ -156,10 +195,6 @@ export const HealthRecordProvider: React.FC<{ children: React.ReactNode }> = ({ 
     return () => clearTimeout(timer);
   }, [allPatients, doctorsList, verificationQueue, fhirAuditLogs, triageRedFlagsCount, hydrationCompleted]);
 
-  const [fhirAuditLogs, setFhirAuditLogs] = useState<FhirAuditEvent[]>([
-    createFhirAuditEvent('Patient Registration Profile Setup', 'PATIENT_TOKEN_8841', '0')
-  ]);
-
   const addFhirAuditLog = (event: FhirAuditEvent) => {
     setFhirAuditLogs(prev => [event, ...prev]);
   };
@@ -173,34 +208,30 @@ export const HealthRecordProvider: React.FC<{ children: React.ReactNode }> = ({ 
     return result;
   };
 
-  const [doctorsList, setDoctorsList] = useState<DoctorStaff[]>([
-    {
-      id: 'doc-1',
-      fullName: 'Dr. R. K. Sharma (MD)',
-      licenseNumber: 'GOV-MED-44109',
-      department: 'General Medicine',
-      facility: 'District Hospital OPD',
-      username: 'dr.rk.sharma',
-      joinedDate: '10 Jan 2026',
-      status: 'active'
-    },
-    {
-      id: 'doc-2',
-      fullName: 'Dr. Priya Nair (MD)',
-      licenseNumber: 'GOV-MED-55912',
-      department: 'Pediatrics & Triage',
-      facility: 'Primary Health Centre (PHC)',
-      username: 'dr.priya.nair',
-      joinedDate: '01 Feb 2026',
-      status: 'active'
-    }
-  ]);
-
   const triggerNotify = (msg: string) => {
     setNotification(msg);
     setTimeout(() => {
       setNotification(null);
     }, 4000);
+  };
+
+  const issueWeatherAlert = (condition: WeatherCondition, channels: DeliveryChannel[], hospitalId?: string, hospitalName?: string) => {
+    const recipientCount = hospitalId
+      ? allPatients.filter(p => p.registeredHospitalId === hospitalId).length
+      : 0;
+    setWeatherAlert({
+      condition,
+      issuedAt: new Date().toISOString(),
+      channels,
+      hospitalId,
+      hospitalName,
+      recipientCount
+    });
+    triggerNotify(`🌦️ Preventive alert broadcast to ${recipientCount} registered patient${recipientCount === 1 ? '' : 's'} at ${hospitalName ?? 'network'} via ${channels.map(c => c.toUpperCase()).join(', ')}.`);
+  };
+
+  const clearWeatherAlert = () => {
+    setWeatherAlert(null);
   };
 
   const triggerTriageRedFlag = () => {
@@ -303,7 +334,8 @@ export const HealthRecordProvider: React.FC<{ children: React.ReactNode }> = ({ 
     licenseNumber: string,
     department: string,
     facility: string,
-    username: string
+    username: string,
+    hospitalId?: string
   ) => {
     const newDoctor: DoctorStaff = {
       id: `doc-${Date.now()}`,
@@ -311,12 +343,45 @@ export const HealthRecordProvider: React.FC<{ children: React.ReactNode }> = ({ 
       licenseNumber,
       department,
       facility,
+      hospitalId,
       username,
       joinedDate: 'Today',
       status: 'active'
     };
     setDoctorsList(prev => [newDoctor, ...prev]);
-    triggerNotify(`🎉 Authorized Doctor (${name}) onboarded! Login username: ${username}`);
+    triggerNotify(`🎉 Authorized Doctor (${name}) onboarded to ${facility}! Login username: ${username}`);
+  };
+
+  const recordMentalWellness = (result: MentalWellnessResult) => {
+    const riskLabel = result.risk === 'high' ? 'High Risk — Support Referral' : result.risk === 'moderate' ? 'Moderate Risk — Support Advised' : 'Healthy Baseline';
+    const timelineEvent: TimelineEvent = {
+      id: `tl-mw-${Date.now()}`,
+      date: 'Today',
+      title: `🧠 Mental Wellness Screening · ${riskLabel}`,
+      category: 'consultation',
+      facility: 'Govt Digital Health Self-Service Kiosk',
+      clinicalStatus: result.risk === 'high' ? 'critical' : result.risk === 'moderate' ? 'pending' : 'resolved',
+      summary: `Trauma-Tier grid memory check (Final Tier ${result.finalTier}). Solve time ${(result.timeMs / 1000).toFixed(1)}s, ${result.misclicks} misclick${result.misclicks === 1 ? '' : 's'}, freezing ${result.freezingDetected ? 'detected' : 'none'}. ${result.abandoned ? 'Screening discontinued during active recall.' : 'Referral guidance shown as applicable.'}`
+    };
+
+    setPatient(prev => ({
+      ...prev,
+      mentalWellness: result,
+      timeline: [timelineEvent, ...prev.timeline]
+    }));
+
+    setAllPatients(all => all.map(p =>
+      p.permanentId === patient.permanentId
+        ? { ...p, mentalWellness: result, timeline: [timelineEvent, ...p.timeline] }
+        : p
+    ));
+
+    addFhirAuditLog(createFhirAuditEvent(`Mental Wellness Trauma-Tier Screening — ${riskLabel}`));
+    triggerNotify(result.risk === 'high'
+      ? `🧠 Support referral recorded. Official support contacts shown on your result.`
+      : result.risk === 'moderate'
+        ? `🧠 Screening complete (Moderate). Counselling options shown on result.`
+        : `🧠 Screening complete — Healthy Baseline. Keep up the good habits!`);
   };
 
   const registerNewCitizen = (
@@ -325,7 +390,8 @@ export const HealthRecordProvider: React.FC<{ children: React.ReactNode }> = ({ 
     dob: string,
     gender: 'Male' | 'Female' | 'Other',
     bloodGroup: string,
-    aadhaarNumber: string
+    aadhaarNumber: string,
+    hospitalId?: string
   ): { profile: CitizenProfile; isExisting: boolean } => {
     const cleanAadhaar = aadhaarNumber.replace(/\D/g, '');
     const cleanMobile = mobile.replace(/\D/g, '');
@@ -343,6 +409,9 @@ export const HealthRecordProvider: React.FC<{ children: React.ReactNode }> = ({ 
       return { profile: existing, isExisting: true };
     }
 
+    const hospital = getHospitalById(hospitalId);
+    const facilityLabel = hospital ? `${hospital.name} (${hospital.code})` : 'Government OPD Registration Counter';
+
     const newId = `GOV-IND-2026-${Math.floor(10000 + Math.random() * 90000)}`;
     const newAbha = `91-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`;
 
@@ -357,7 +426,8 @@ export const HealthRecordProvider: React.FC<{ children: React.ReactNode }> = ({ 
       height: '170 cm',
       weight: '68 kg',
       mobile,
-      address: 'Government OPD Registrant',
+      address: facilityLabel,
+      registeredHospitalId: hospitalId,
       emergencyContact: {
         name: 'Family Contact',
         relation: 'Relative',
@@ -374,7 +444,7 @@ export const HealthRecordProvider: React.FC<{ children: React.ReactNode }> = ({ 
           date: 'Today',
           title: 'Permanent Health Profile Created',
           category: 'consultation',
-          facility: 'Registration Desk',
+          facility: facilityLabel,
           clinicalStatus: 'verified',
           summary: 'Citizen registered in national digital health database.'
         }
@@ -384,7 +454,7 @@ export const HealthRecordProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     setAllPatients(prev => [...prev, newProfile]);
     setPatient(newProfile);
-    triggerNotify(`🎉 Permanent Health ID Issued! Total Profiles: ${allPatients.length + 1}`);
+    triggerNotify(`🎉 Permanent Health ID Issued to ${facilityLabel}! Total Profiles: ${allPatients.length + 1}`);
     return { profile: newProfile, isExisting: false };
   };
 
@@ -631,9 +701,13 @@ export const HealthRecordProvider: React.FC<{ children: React.ReactNode }> = ({ 
         updateVitalsAndContact,
         registerNewCitizen,
         onboardNewDoctor,
+        recordMentalWellness,
         triggerTriageRedFlag,
         notification,
-        setNotification
+        setNotification,
+        weatherAlert,
+        issueWeatherAlert,
+        clearWeatherAlert
       }}
     >
       {children}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useHealthRecord } from '../../context/HealthRecordContext.tsx';
 import type { UserRole } from '../../types/health.ts';
-import { ShieldCheck, Stethoscope, User, Monitor, UserPlus, Building2, ArrowRight, Sparkles, Lock, Bot } from 'lucide-react';
+import { ShieldCheck, Stethoscope, User, Monitor, UserPlus, Building2, Cross, ArrowRight, Sparkles, Lock, Bot } from 'lucide-react';
 import { AIHistoryIntakeModal } from '../citizen/AIHistoryIntakeModal.tsx';
 
 export const LandingPage: React.FC = () => {
@@ -44,6 +44,15 @@ export const LandingPage: React.FC = () => {
       badge: 'Hospital Counter',
       btnText: t('accessRegistration'),
       color: 'from-[#E8F5E9] to-[#C8E6C9]'
+    },
+    {
+      role: 'hospital',
+      title: 'Hospital Portal',
+      desc: 'Facility operations dashboard — manage staff, OPD queues, wellness referrals and live sync status for your selected hospital.',
+      icon: <Cross className="w-7 h-7 text-[#1B5E20]" />,
+      badge: 'Facility Operations',
+      btnText: 'Enter Hospital Portal',
+      color: 'from-[#E8F5E9] to-[#D4EDD6]'
     },
     {
       role: 'admin',

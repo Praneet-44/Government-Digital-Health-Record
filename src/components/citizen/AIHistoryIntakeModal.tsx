@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Bot,
   Mic,
   Send,
   Lock,
@@ -12,13 +11,14 @@ import {
   Wand2,
   Check,
   ArrowRight,
-  ShieldCheck,
   Globe,
   ExternalLink
 } from 'lucide-react';
 import { useHealthRecord } from '../../context/HealthRecordContext.tsx';
 import { evaluateClinicalWithMedGemma, type WebSearchSource, NMC_MANDATORY_DISCLAIMER } from '../../services/medGemmaService.ts';
 import { SarvamVoiceAssistantModal } from './SarvamVoiceAssistantModal.tsx';
+
+export type AIMode = 'awareness' | 'doctorIntake';
 
 export interface ImageAnalysisResult {
   id: string;
@@ -47,6 +47,7 @@ interface ChatMessage {
 
 interface AIHistoryIntakeModalProps {
   onClose: () => void;
+  initialMode?: AIMode;
 }
 
 const PRESET_DOCUMENTS: ImageAnalysisResult[] = [
@@ -94,17 +95,16 @@ const PRESET_DOCUMENTS: ImageAnalysisResult[] = [
   }
 ];
 
-export const AIHistoryIntakeModal: React.FC<AIHistoryIntakeModalProps> = ({ onClose }) => {
-  const { t, uploadDocument, patient, addFhirAuditLog } = useHealthRecord();
+export const AIHistoryIntakeModal: React.FC<AIHistoryIntakeModalProps> = ({ onClose, initialMode = 'awareness' }) => {
+  const { uploadDocument, patient, addFhirAuditLog } = useHealthRecord();
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'msg-1',
       role: 'ai',
-      text: `💡 Hello! I am your Public AI Health Awareness Assistant. Powered by Google MedGemma (medgemma-7b-it) clinical reasoning, Sarvam.ai (Saaras STT & 22 Indian languages) and Vision OCR. Speak or type in native languages (Tamil, Hindi, Hinglish, Tanglish, Bengali, Telugu) or attach paper prescriptions for instant analysis!\n\n⚠️ ${NMC_MANDATORY_DISCLAIMER}`
+      text: `💡 Hello! I am your AI Health Assistant. Powered by Google MedGemma clinical reasoning, Sarvam.ai (22 Indian languages) and Vision OCR. Ask any medical question, search health topics, or describe symptoms for instant direct answers and live web search grounding!\n\n⚠️ ${NMC_MANDATORY_DISCLAIMER}`
     }
   ]);
   const [input, setInput] = useState('');
-  const [isListening, setIsListening] = useState(false);
   const [showImagePicker, setShowImagePicker] = useState(false);
   const [showSarvamModal, setShowSarvamModal] = useState(false);
 
@@ -205,14 +205,6 @@ export const AIHistoryIntakeModal: React.FC<AIHistoryIntakeModalProps> = ({ onCl
     setMessages(prev =>
       prev.map(m => (m.id === msgId ? { ...m, isSavedToLocker: true } : m))
     );
-  };
-
-  const toggleVoice = () => {
-    setIsListening(true);
-    setTimeout(() => {
-      setInput('What are healthy ways to manage mild fever at home?');
-      setIsListening(false);
-    }, 1800);
   };
 
   return (

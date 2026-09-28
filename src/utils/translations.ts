@@ -42,6 +42,11 @@ export const translations: Record<string, Record<SupportedLanguage, string>> = {
     Hindi: 'सरकारी व्यवस्थापक',
     Tamil: 'அரசு நிர்வாகம்'
   },
+  hospitalPortal: {
+    English: 'Hospital',
+    Hindi: 'अस्पताल',
+    Tamil: 'மருத்துவமனை'
+  },
   switchView: {
     English: 'Switch View:',
     Hindi: 'दृश्य बदलें:',

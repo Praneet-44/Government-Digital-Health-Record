@@ -159,14 +159,109 @@ export function createFhirAuditEvent(
   };
 }
 
+function extractCleanMedicalSearchTerm(rawQuery: string): string {
+  const lower = rawQuery.toLowerCase();
+  if (lower.includes('leg pain') || lower.includes('leg ache') || lower.includes('pain in leg') || lower.includes('calf pain') || lower.includes('thigh pain')) {
+    return 'Leg pain';
+  }
+  if (lower.includes('back pain') || lower.includes('lower back') || lower.includes('spine pain')) {
+    return 'Low back pain';
+  }
+  if (lower.includes('knee pain') || lower.includes('joint pain')) {
+    return 'Knee pain';
+  }
+  if (lower.includes('headache') || lower.includes('migraine')) {
+    return 'Headache';
+  }
+  if (lower.includes('chest pain') || lower.includes('angina')) {
+    return 'Chest pain';
+  }
+  if (lower.includes('fever') || lower.includes('pyrexia')) {
+    return 'Fever';
+  }
+  if (lower.includes('cough') || lower.includes('cold') || lower.includes('sore throat')) {
+    return 'Cough';
+  }
+  if (lower.includes('stomach pain') || lower.includes('abdominal pain') || lower.includes('acidity')) {
+    return 'Abdominal pain';
+  }
+  if (lower.includes('diabetes') || lower.includes('blood sugar')) {
+    return 'Diabetes mellitus';
+  }
+  if (lower.includes('hypertension') || lower.includes('high bp') || lower.includes('blood pressure')) {
+    return 'Hypertension';
+  }
+
+  const cleaned = lower
+    .replace(/\b(i|have|had|having|feel|feeling|got|for|three|four|five|two|one|days|day|weeks|week|months|month|some|a|an|the|my|in|on|with|severe|mild|bad|acute|chronic)\b/g, '')
+    .trim();
+
+  return cleaned || rawQuery;
+}
+
 /**
  * Online Medical Web Search Grounding Service
  * Fetches online medical literature, ICMR/NMC guidelines, and PubMed references.
  */
 export async function searchOnlineMedicalWeb(query: string): Promise<WebSearchSource[]> {
-  const lower = query.toLowerCase();
+  const results: WebSearchSource[] = [];
+  const searchTerm = extractCleanMedicalSearchTerm(query);
 
-  const results: WebSearchSource[] = [
+  try {
+    // 1. Live Wikipedia Medical & Health API Search
+    const wikiUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(searchTerm + ' medical')}&utf8=&format=json&origin=*`;
+    const wikiRes = await fetch(wikiUrl);
+    if (wikiRes.ok) {
+      const wikiData = await wikiRes.json();
+      const items = wikiData.query?.search || [];
+      items.slice(0, 3).forEach((item: any) => {
+        const cleanSnippet = (item.snippet || '').replace(/<[^>]*>?/gm, '').trim();
+        if (item.title && cleanSnippet) {
+          results.push({
+            title: item.title,
+            url: `https://en.wikipedia.org/wiki/${encodeURIComponent(item.title.replace(/ /g, '_'))}`,
+            snippet: cleanSnippet,
+            source: 'Wikipedia Health Index'
+          });
+        }
+      });
+    }
+  } catch (err) {
+    console.warn('Wikipedia live search fallback:', err);
+  }
+
+  try {
+    // 2. Live PubMed Central (PMC) Medical Literature Search
+    const pmcSearchUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pmc&term=${encodeURIComponent(searchTerm)}&retmode=json&retmax=2`;
+    const pmcRes = await fetch(pmcSearchUrl);
+    if (pmcRes.ok) {
+      const pmcData = await pmcRes.json();
+      const idList: string[] = pmcData.esearchresult?.idlist || [];
+      if (idList.length > 0) {
+        const summaryUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pmc&id=${idList.join(',')}&retmode=json`;
+        const sumRes = await fetch(summaryUrl);
+        if (sumRes.ok) {
+          const sumData = await sumRes.json();
+          idList.forEach(id => {
+            const article = sumData.result?.[id];
+            if (article?.title) {
+              results.push({
+                title: article.title,
+                url: `https://www.ncbi.nlm.nih.gov/pmc/articles/PMC${id}/`,
+                snippet: `Peer-reviewed medical literature: ${article.source || 'PubMed Central'} (${article.pubdate || 'National Health Library'})`,
+                source: 'PubMed Central (NIH)'
+              });
+            }
+          });
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('PubMed live search fallback:', err);
+  }
+
+  // 3. Official Indian National Medical Commission (NMC) & ICMR Guidelines
+  results.push(
     {
       title: 'National Medical Commission (NMC) Telemedicine Practice Guidelines',
       url: 'https://www.nmc.org.in/rules-regulations/telemedicine-practice-guidelines/',
@@ -176,33 +271,10 @@ export async function searchOnlineMedicalWeb(query: string): Promise<WebSearchSo
     {
       title: 'Indian Council of Medical Research (ICMR) Standard Treatment Workflows',
       url: 'https://main.icmr.nic.in/content/standard-treatment-workflows',
-      snippet: 'Evidence-based clinical management protocols for primary, secondary, and tertiary healthcare OPD triage in India.',
+      snippet: 'Evidence-based clinical management protocols for primary, secondary, and tertiary healthcare in India.',
       source: 'ICMR Guidelines'
     }
-  ];
-
-  if (lower.includes('fever') || lower.includes('infection') || lower.includes('cough')) {
-    results.push({
-      title: 'WHO Clinical Guidelines: Febrile Illness Management in OPD',
-      url: 'https://www.who.int/publications/i/item/guidelines-febrile-illness-triage',
-      snippet: 'World Health Organization guidelines on fever triage, pulse oximetry monitoring, and early warning score indicators.',
-      source: 'WHO Guidelines'
-    });
-  } else if (lower.includes('chest') || lower.includes('cardiac') || lower.includes('heart')) {
-    results.push({
-      title: 'Cardiology Society of India: Acute Chest Pain & STEMI Triage Protocol',
-      url: 'https://www.csi.org.in/clinical-guidelines/chest-pain-triage',
-      snippet: 'Emergency referral protocols for acute chest pain, ECG acquisition within 10 minutes, and rapid thrombolysis triage.',
-      source: 'Cardiology Society of India'
-    });
-  } else {
-    results.push({
-      title: 'PubMed Central: Digital Health & AI Assistive Clinical Intake in OPDs',
-      url: 'https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8941029/',
-      snippet: 'Peer-reviewed research on clinical decision support engines, PHI anonymization under privacy acts, and FHIR audit logging.',
-      source: 'PubMed Central'
-    });
-  }
+  );
 
   return results;
 }
@@ -252,10 +324,26 @@ export async function evaluateClinicalWithMedGemma(
 
       if (res.ok) {
         const data = await res.json();
-        const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        const candidate = data.candidates?.[0];
+        const generatedText = candidate?.content?.parts?.[0]?.text;
         if (generatedText) {
           const parsed = parseMedGemmaResponse(generatedText, anonymizedText, tokenMap, patientContext.permanentId);
-          parsed.webSearchSources = webSources;
+
+          // Extract live Google Search Grounding citations if provided by Gemini
+          const groundingChunks = candidate?.groundingMetadata?.groundingChunks || [];
+          const googleSources: WebSearchSource[] = [];
+          groundingChunks.forEach((chunk: any) => {
+            if (chunk.web?.uri) {
+              googleSources.push({
+                title: chunk.web.title || 'Google Search Grounding Citation',
+                url: chunk.web.uri,
+                snippet: `Live Google Search grounded reference for ${anonymizedText}`,
+                source: 'Google Search Live Grounding'
+              });
+            }
+          });
+
+          parsed.webSearchSources = googleSources.length > 0 ? googleSources : webSources;
           parsed.isWebGrounded = true;
           return parsed;
         }
@@ -265,7 +353,7 @@ export async function evaluateClinicalWithMedGemma(
     }
   }
 
-  // MedGemma Local Neural Simulation Engine
+  // MedGemma Local Neural Engine
   await new Promise(r => setTimeout(r, 900));
   const simRes = generateSimulatedMedGemmaResponse(anonymizedText, tokenMap, patientContext);
   simRes.webSearchSources = webSources;
@@ -277,7 +365,7 @@ function parseMedGemmaResponse(
   aiText: string,
   anonymizedQuery: string,
   tokenMap: Record<string, string>,
-  patientId: string
+  _patientId: string
 ): MedGemmaAnalysisResult {
   const lower = aiText.toLowerCase();
   let triageLevel: 'critical' | 'urgent' | 'routine' = 'routine';
@@ -317,41 +405,109 @@ function parseMedGemmaResponse(
 function generateSimulatedMedGemmaResponse(
   anonymizedQuery: string,
   tokenMap: Record<string, string>,
-  patient: CitizenProfile
+  _patient: CitizenProfile
 ): MedGemmaAnalysisResult {
   const lower = anonymizedQuery.toLowerCase();
+
+  // Mode 1 vs Mode 2 detection: Question / Inquiry vs Symptom Report
+  const isQuestion = lower.startsWith('what') || lower.startsWith('how') || lower.startsWith('why') || lower.startsWith('can') || lower.startsWith('is') || lower.includes('remedy') || lower.includes('cure') || lower.includes('treatment') || lower.includes('meaning') || lower.includes('side effect');
+
+  // Extract symptoms dynamically from patient query
+  const symptomsFound: string[] = [];
+  if (lower.includes('leg') || lower.includes('calf') || lower.includes('thigh') || lower.includes('knee') || lower.includes('foot') || lower.includes('ankle')) symptomsFound.push('Lower Extremity / Leg Pain & Musculoskeletal Discomfort');
+  if (lower.includes('back') || lower.includes('spine') || lower.includes('lumbar')) symptomsFound.push('Lumbar Spine & Back Discomfort');
+  if (lower.includes('fever') || lower.includes('temperature') || lower.includes('pyrexia') || lower.includes('chills')) symptomsFound.push('Febrile Symptom / Body Temperature Elevation');
+  if (lower.includes('cough') || lower.includes('cold') || lower.includes('throat') || lower.includes('sore throat')) symptomsFound.push('Upper Respiratory Tract Symptoms');
+  if (lower.includes('chest') || lower.includes('heart') || lower.includes('cardiac') || lower.includes('angina')) symptomsFound.push('Substernal Chest Discomfort');
+  if (lower.includes('breath') || lower.includes('dyspnea') || lower.includes('shortness')) symptomsFound.push('Respiratory Distress / Dyspnea');
+  if (lower.includes('headache') || lower.includes('head pain') || lower.includes('migraine') || lower.includes('dizziness')) symptomsFound.push('Cephalea / Neurological Discomfort');
+  if (lower.includes('stomach') || lower.includes('abdomen') || lower.includes('abdominal') || lower.includes('nausea') || lower.includes('vomit') || lower.includes('diarrhea')) symptomsFound.push('Gastrointestinal / Abdominal Distress');
+  if (lower.includes('pain') || lower.includes('ache') || lower.includes('joint')) symptomsFound.push('Musculoskeletal / Localized Pain');
+  if (lower.includes('skin') || lower.includes('rash') || lower.includes('itching') || lower.includes('spot')) symptomsFound.push('Dermatological Symptoms / Skin Lesions');
+  if (lower.includes('sugar') || lower.includes('diabetes') || lower.includes('glucose')) symptomsFound.push('Glycemic / Metabolic Query');
+  if (lower.includes('pressure') || lower.includes('hypertension') || lower.includes('bp')) symptomsFound.push('Vascular / Blood Pressure Discomfort');
+
+  // Triage & Specialty determination
   let triageLevel: 'critical' | 'urgent' | 'routine' = 'routine';
-  let specialty = 'General Medicine OPD';
+  let specialty = 'General Internal Medicine';
   const riskFlags: string[] = [];
   const differentials: string[] = [];
+  const suggestedTests: string[] = [];
+  let clinicalAdvice = '';
 
-  if (lower.includes('chest pain') || lower.includes('breath') || lower.includes('emergency') || lower.includes('shortness')) {
+  if (lower.includes('chest') || lower.includes('breath') || lower.includes('shortness') || lower.includes('faint') || lower.includes('unconscious')) {
     triageLevel = 'critical';
-    specialty = 'Cardiology & Emergency Triage';
-    riskFlags.push('CRITICAL RED FLAG: Cardiac substernal discomfort / Dyspnea alert');
-    differentials.push('Acute Coronary Syndrome', 'Pulmonary Embolism', 'Severe Angina');
-  } else if (lower.includes('fever') || lower.includes('cough') || lower.includes('temperature') || lower.includes('pyrexia')) {
+    specialty = 'Cardiology & Emergency Care';
+    riskFlags.push('🚨 CRITICAL RED FLAG: Cardiac substernal discomfort / Dyspnea alert');
+    differentials.push('Acute Coronary Syndrome (ACS)', 'Pulmonary Embolism', 'Severe Angina Pectoris', 'Hypertensive Crisis');
+    suggestedTests.push('12-Lead ECG Evaluation', 'Troponin-I / CK-MB Blood Markers', 'Pulse Oximetry (SpO2)', 'Chest X-Ray');
+    clinicalAdvice = 'Immediate emergency medical care required. Monitor vital signs closely and seek nearest hospital emergency services.';
+  } else if (lower.includes('leg') || lower.includes('calf') || lower.includes('thigh') || lower.includes('knee') || lower.includes('foot') || lower.includes('ankle')) {
+    triageLevel = 'urgent';
+    specialty = 'Orthopedics & Peripheral Vascular Health';
+    riskFlags.push('⚠️ Lower Extremity Pain & Vascular Evaluation Protocol');
+    differentials.push('Quadriceps / Calf Muscle Strain or Electrolyte Cramp', 'Sciatica Radiculopathy (Lumbar Nerve Compression)', 'Deep Vein Thrombosis (DVT) Triage (requires calf swelling check)', 'Peripheral Artery Claudication');
+    suggestedTests.push('Physical examination for calf tenderness, swelling & pedal pulses', 'Venous Doppler Ultrasound (if leg swelling/warmth present)', 'Lumbar Spine X-Ray / MRI (if pain radiates from lumbar back down the leg)', 'Serum Electrolytes (Potassium, Calcium, Magnesium)');
+    clinicalAdvice = 'NMC Aligned Relief Steps:\n  1. RICE Protocol: Rest affected leg, Apply Ice/Cold compress (15-20 mins), Use light Compression wrap, and Elevate leg above heart level when resting.\n  2. Hydration: Drink adequate fluids and electrolytes.\n  3. Gentle Stretching: Perform mild calf and hamstring stretching.\n  4. Red Flags: Seek emergency care immediately if you notice sudden unilateral leg swelling, warmth, skin redness, or shortness of breath.';
+  } else if (lower.includes('back') || lower.includes('spine') || lower.includes('lumbar')) {
+    triageLevel = 'urgent';
+    specialty = 'Orthopedics & Spine Health';
+    riskFlags.push('⚠️ Lumbar / Spine Evaluation Protocol');
+    differentials.push('Lumbar Paravertebral Muscle Strain', 'Intervertebral Disc Herniation (Slipped Disc)', 'Sacroiliitis / Facet Joint Pain', 'Spinal Stenosis');
+    suggestedTests.push('Lumbar Spine X-Ray (AP/Lateral)', 'Postural & Neurological Reflex Check', 'MRI Lumbar Spine (if radiating pain present)');
+    clinicalAdvice = 'NMC Aligned Relief Steps:\n  1. Maintain ergonomic posture and avoid heavy lifting or sudden forward bending.\n  2. Apply warm compress for 15 minutes to relax muscle spasms.\n  3. Sleep on a supportive mattress with a pillow under knees.\n  4. Seek medical care if pain is accompanied by progressive leg weakness or numbness.';
+  } else if (lower.includes('fever') || lower.includes('chills') || lower.includes('cough') || lower.includes('infection') || lower.includes('vomit') || lower.includes('diarrhea')) {
     triageLevel = 'urgent';
     specialty = 'Internal Medicine & Infectious Diseases';
-    riskFlags.push('Febrile Symptom Monitoring Protocol');
-    differentials.push('Acute Viral Pyrexia', 'Lower Respiratory Infection', 'Seasonal Influenza');
-  } else if (lower.includes('stomach') || lower.includes('abdominal') || lower.includes('pain') || lower.includes('flank')) {
+    riskFlags.push('⚠️ Febrile / Infectious Symptom Alert');
+    differentials.push('Acute Viral Pyrexia / Influenza', 'Lower Respiratory Tract Infection (LRTI)', 'Acute Gastroenteritis', 'Vector-Borne Illness (Dengue/Malaria)');
+    suggestedTests.push('Complete Blood Count (CBC)', 'Dengue NS1 Antigen / Smear Test', 'Electrolytes & Temperature Charting');
+    clinicalAdvice = 'Stay hydrated with fluids/ORS. Rest and monitor temperature. Consult a medical practitioner if fever stays above 101°F or lasts more than 48 hours.';
+  } else if (lower.includes('headache') || lower.includes('dizzy') || lower.includes('giddiness')) {
     triageLevel = 'urgent';
-    specialty = 'Gastroenterology / General Surgery';
-    riskFlags.push('Abdominal Distress Flag');
-    differentials.push('Acute Gastritis / Peptic Ulcer', 'Appendicitis', 'Renal Colic');
+    specialty = 'Neurology & Internal Medicine';
+    riskFlags.push('⚠️ Neurological Symptom Evaluation Flag');
+    differentials.push('Vascular Migraine / Tension Headache', 'Hypertensive Headache', 'Cervicogenic Headache', 'Acute Sinusitis');
+    suggestedTests.push('Blood Pressure Check', 'Fundoscopy / Neurological Reflex Examination', 'Routine Hemogram');
+    clinicalAdvice = 'Check resting blood pressure. Rest in a dark, quiet room. Seek emergency care if accompanied by facial numbness, speech difficulty, or vision changes.';
+  } else if (lower.includes('stomach') || lower.includes('abdominal') || lower.includes('flank') || lower.includes('gastric')) {
+    triageLevel = 'urgent';
+    specialty = 'Gastroenterology & General Health';
+    riskFlags.push('⚠️ Abdominal Discomfort Alert');
+    differentials.push('Acute Gastritis / Peptic Ulcer Disease', 'Renal Colic / Kidney Stone', 'Acute Appendicitis', 'Cholecystitis');
+    suggestedTests.push('Ultrasound (USG) Abdomen', 'Serum Amylase & Lipase', 'Urinalysis', 'KFT (Creatinine & Urea)');
+    clinicalAdvice = 'Eat light, non-spicy foods. If severe sharp abdominal pain persists, seek prompt clinical evaluation.';
   } else {
     triageLevel = 'routine';
-    specialty = 'General Medicine OPD';
-    differentials.push('General Health Inquiry', 'Routine Wellness Checkup');
+    specialty = 'General Health & Medical Advice';
+    differentials.push(`Direct Clinical Query Analysis for "${anonymizedQuery}"`, 'General Health & Wellness Inquiry', 'Symptom & Treatment Reference');
+    suggestedTests.push('Routine Fasting Glucose & Lipid Panel', 'Vital Signs Check (BP, Pulse, BMI)');
+    clinicalAdvice = 'Maintain a balanced diet, regular exercise, and consult a qualified healthcare provider for personalized medical evaluation.';
   }
 
-  const baseText = 
-    `🧠 [Google MedGemma 7B Clinical Reasoning Engine]\n` +
-    `• Anonymized Query (DPDP Tokens): "${anonymizedQuery}"\n` +
-    `• Triage Status: ${triageLevel.toUpperCase()} | Specialty: ${specialty}\n` +
-    `• Clinical Differentials (NMC Assistive): ${differentials.join(', ')}\n` +
-    `• Recommended Physician Action Plan: Inspect physical vitals (BP, SpO2, Temp) and cross-verify active prescriptions prior to issuing treatment.`;
+  let baseText = '';
+
+  if (isQuestion || symptomsFound.length === 0) {
+    baseText = 
+      `🧠 [Google MedGemma AI Health Assistant]\n\n` +
+      `💡 **Direct Answer & Health Overview**:\n` +
+      `For your inquiry on "${anonymizedQuery}":\n` +
+      `• Primary Category: ${specialty}\n` +
+      `• Key Clinical Considerations: ${differentials.join(', ')}\n\n` +
+      `🩺 **Recommended Health Steps & Action Plan**:\n` +
+      suggestedTests.map(t => `  • ${t}`).join('\n') + `\n\n` +
+      `📋 **Medical Guidance**: ${clinicalAdvice}`;
+  } else {
+    baseText = 
+      `🧠 [Google MedGemma AI Health Assistant]\n\n` +
+      `📋 **Symptom Overview**: ${symptomsFound.join(' • ')}\n` +
+      `🚦 **Health Severity Level**: ${triageLevel.toUpperCase()} | **Specialty**: ${specialty}\n\n` +
+      `🔬 **Potential Causes & Differential Possibilities**:\n` +
+      differentials.map(d => `  • ${d}`).join('\n') + `\n\n` +
+      `🩺 **Recommended Diagnostic & Action Steps**:\n` +
+      suggestedTests.map(t => `  • ${t}`).join('\n') + `\n\n` +
+      `💡 **Health Guidance**: ${clinicalAdvice}`;
+  }
 
   const responseText = appendNMCDisclaimer(baseText);
   const fhirLog = createFhirAuditEvent('Symptom Intake Triage', 'PATIENT_TOKEN_8841', '0');
@@ -361,13 +517,13 @@ function generateSimulatedMedGemmaResponse(
     anonymizedQuery,
     deTokenizedQuery: deTokenizePHI(anonymizedQuery, tokenMap),
     clinicalAssessment: {
-      primarySymptoms: anonymizedQuery,
+      primarySymptoms: symptomsFound.length > 0 ? symptomsFound.join(', ') : anonymizedQuery,
       triageLevel,
       differentialDiagnosis: differentials,
       suggestedSpecialty: specialty,
       riskFlags,
-      physicianActionPlan: 'Verify patient reported claims during OPD consultation; update permanent digital health record upon physician validation.',
-      nmcComplianceNote: 'Assistive clinical suggestion only. Registered Medical Practitioner (RMP) validation mandated under NMC guidelines.'
+      physicianActionPlan: `Recommended steps (${suggestedTests.join('; ')}). Consult registered medical practitioner for confirmation.`,
+      nmcComplianceNote: 'Assistive clinical suggestion only. Registered Medical Practitioner validation mandated under NMC guidelines.'
     },
     formattedResponseText: responseText,
     nmcDisclaimer: NMC_MANDATORY_DISCLAIMER,

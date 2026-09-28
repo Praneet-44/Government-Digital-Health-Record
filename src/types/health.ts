@@ -1,4 +1,4 @@
-export type UserRole = 'public' | 'citizen' | 'doctor' | 'kiosk' | 'operator' | 'admin';
+export type UserRole = 'public' | 'citizen' | 'doctor' | 'kiosk' | 'operator' | 'admin' | 'hospital';
 
 export type ClinicalStatus = 'verified' | 'pending' | 'imported' | 'critical' | 'resolved';
 
@@ -94,6 +94,20 @@ export interface ConsentLog {
   sectionsViewed: string[];
 }
 
+export type MentalRiskLevel = 'low' | 'moderate' | 'high';
+
+export interface MentalWellnessResult {
+  assessedAt: string;
+  finalTier: number;
+  risk: MentalRiskLevel;
+  tiersCompleted: number[];
+  timeMs: number;
+  misclicks: number;
+  freezingDetected: boolean;
+  abandoned: boolean;
+  note?: string;
+}
+
 export interface VerificationItem {
   id: string;
   patientId: string;
@@ -131,6 +145,8 @@ export interface CitizenProfile {
   documents: DocumentItem[];
   timeline: TimelineEvent[];
   consentLogs: ConsentLog[];
+  mentalWellness?: MentalWellnessResult;
+  registeredHospitalId?: string;
 }
 
 export interface DoctorStaff {
@@ -139,6 +155,7 @@ export interface DoctorStaff {
   licenseNumber: string;
   department: string;
   facility: string;
+  hospitalId?: string;
   username: string;
   joinedDate: string;
   status: 'active' | 'inactive';

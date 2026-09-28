@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useHealthRecord } from '../../context/HealthRecordContext.tsx';
-import { FileText, Upload, Bot, FileUp, Sparkles, Camera, CheckCircle2, ArrowRight } from 'lucide-react';
+import { FileText, Upload, Bot, FileUp, Sparkles } from 'lucide-react';
 
 export const DocumentLocker: React.FC = () => {
   const { patient, uploadDocument } = useHealthRecord();
